@@ -87,6 +87,21 @@ end
 
 clear frames prevFrames
 
+%% Perform dfft alignment for motion correction if requested
+if opts.motionCorrect
+    fprintf('Performing motion correction...\n')
+    refImg = allData(:,:,1,1);
+    refdft = fft2(refImg);
+
+    %perform motion correction 
+    for i = 1:size(allData, 3)
+        for j = 1:size(allData, 4)
+            [~, temp] = dftregistration(refdft, fft2(allData(:, :, i,j)), 10);
+            allData(:,:,i,j) = abs(ifft2(temp));
+        end
+    end
+end
+
 
 %% Compute df/f
 if opts.computeDFF
