@@ -1,4 +1,4 @@
-function tform = alignImages(opts)
+function template = alignImages(opts, data)
 %% Load the reference and data iamges
 img = TIFFStack(opts.refImgPath);
 refImg = img(:,:,1);
@@ -36,12 +36,55 @@ title('Raw image')
 
 %% Now we can overlay the atlas
 load(opts.refAtlasPath, 'borders');
+load(opts.refAtlasPath, 'atlas', 'areanames');
 borders = imwarp(borders,tform,'OutputView',imref2d(size(refImg)));
+atlas = imwarp(atlas,tform,'nearest', 'OutputView',imref2d(size(refImg)));
 subplot(122)
 imagesc(singleImg + uint16(borders) * 1000)
 hold on
 plot(rotpoints(:,1),rotpoints(:,2),'xw','linewidth',2);
 plot(imgPoints(:,1),imgPoints(:,2),'xr','linewidth',2);
 
+atlas = imresize(atlas, 1/opts.resizeFactor, 'nearest');
+
+
+% % Round the transformed atlas to the nearest area Idx
+% fieldIDs = fieldnames(areanames);
+% areaIdxList = [];
+% for i = 1:numel(fieldIDs)
+%     areaIdxList(i) = areanames.(fieldIDs{i});
+% end
+% areaIdxList = areaIdxList(areaIdxList > 0);
+% 
+% atlasFlat = atlas(:);
+% aDiff = atlasFlat - areaIdxList;
+% atlasRound = argmin(abs(aDiff'));
+% atlasRound = areaIdxList(atlasRound);
+% atlasRound(atlasFlat == 0) = 0;
+% atlasRound = reshape(atlasRound, size(atlas));
+
+% Outputs
+template.borders = imresize(borders, 1/opts.resizeFactor, 'nearest');
+template.atlas = atlas;
+template.areanames = areanames;
+
+%% Extract the area information
+areaid = unique(template.atlas(:));
+areaid = areaid(areaid ~= 0);
+
+aggAllAreas = [];
+fprintf('Extracting area data...\n');
+for i = 1:numel(areaid)
+    idx = areaid(i);
+    mask = template.atlas == idx;
+    areaData = data .* mask;
+    areaData = reshape(areaData, size(areaData, 1) * size(areaData, 2), []);
+    aggData = sum(areaData, 1);
+    aggAllAreas(i,:) = aggData;
+end 
+
+% aggAllAreas has shape nAreas x nTimepoints x nTrials
+aggAllAreas = reshape(aggAllAreas, numel(areaid), size(data, 3), []);
+template.aggData = aggAllAreas;
 
 end

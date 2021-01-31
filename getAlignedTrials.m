@@ -100,6 +100,8 @@ if opts.motionCorrect
             allData(:,:,i,j) = abs(ifft2(temp));
         end
     end
+else
+    fprintf('Skipping motion correction...\n')
 end
 
 
