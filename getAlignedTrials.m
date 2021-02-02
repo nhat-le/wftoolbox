@@ -1,9 +1,29 @@
-function allData = getAlignedTrials(opts, trialInfo, timingInfo)
+function output = getAlignedTrials(opts, trialInfo, timingInfo)
 window = floor(opts.dt * timingInfo.fs); %frames to extract from alignment point
 nframes = window(2) - window(1) + 1;
 ntrials = trialInfo.ntrials;
 nFiles = numel(opts.datafiles);
 stem = opts.stem;
+
+% For hemocorrect, make sure window is even num of elements
+if opts.hemoCorrect
+    if mod(nframes, 2) == 1
+        window(2) = window(2) + 1;
+        nframes = nframes + 1;
+    end
+end
+
+output.window = window;
+
+
+% Check if Thorcam is old or new version by checking if 'stem_0.tif' exists
+fileCheck = sprintf('%s_0.tif', opts.stem);
+dirCheck = dir(fullfile(opts.filePath, fileCheck));
+if isempty(dirCheck)
+    thorNewVersion = 1;
+else
+    thorNewVersion = 0;
+end
 
 % Define what reference points to take
 if strcmp(opts.alignedBy, 'reward')
@@ -17,12 +37,22 @@ end
 % Idx of frames to extract
 frameids = [];
 for i = 1:ntrials
-    frameids(i,:) = (refPts(i) + window(1)) : (refPts(i) + window(2));
+    if opts.hemoCorrect
+        % For two channels, make sure that we always start on an even frame
+        if mod(refPts(i) + window(1), 2) == 1
+            frameids(i,:) = (refPts(i) + window(1) + 1) : (refPts(i) + window(2) + 1);    
+        else
+            frameids(i,:) = (refPts(i) + window(1)) : (refPts(i) + window(2));
+        end
+    else
+        frameids(i,:) = (refPts(i) + window(1)) : (refPts(i) + window(2));
+    end
 end
 
 
 %% Perform the extraction
 currimg = 1;
+fprintf('Processing file %d of %d\n', 1, numel(opts.datafiles));
 frames = TIFFStack(fullfile(opts.datafiles(1).folder, opts.datafiles(1).name));
 imgDim = size(frames);
 
@@ -46,7 +76,7 @@ for i = 1:trialInfo.ntrials
         if currimg == 1
             filename = sprintf('%s.tif', stem);
         else
-            filename = sprintf('%s_%d.tif', stem, currimg-2);
+            filename = sprintf('%s_%d.tif', stem, currimg-2 + thorNewVersion);
         end
         
         frames = TIFFStack(fullfile(opts.datafiles(currimg).folder, filename));
@@ -69,7 +99,7 @@ for i = 1:trialInfo.ntrials
             if currimg - 1 == 1
                 prevFilename = sprintf('%s.tif', stem);
             else
-                prevFilename = sprintf('%s_%d.tif', stem, currimg-2);
+                prevFilename = sprintf('%s_%d.tif', stem, currimg-2+thorNewVersion);
             end
             prevFrames = TIFFStack(fullfile(opts.datafiles(currimg-1).folder, prevFilename));
             allData(:,:,modFramesToExtract > size(frames, 3),i) = ...
@@ -104,17 +134,75 @@ else
     fprintf('Skipping motion correction...\n')
 end
 
+side = 0;
+%% Hemodynamic correction
+if opts.hemoCorrect
+    bData = allData(:,:,1:2:end,:);
+    vData = allData(:,:,2:2:end,:);
 
-%% Compute df/f
-if opts.computeDFF
-    fprintf('Frames extracted. Computing df/f...\n');
-    baselineDur = 1:floor(-window(1));
-    baselineAvg = nanmean(nanmean(allData(:,:, baselineDur, :),3), 4);
-    allData = reshape(allData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor, []); %merge all frames to subtract and divide baseline
-    allData = bsxfun(@minus, allData, baselineAvg); % subtract baseline
-    allData = bsxfun(@rdivide, allData, baselineAvg); % divide baseline
-    allData = reshape(allData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor,nframes,ntrials); %shape back to initial form
+    % visualize the channels
+    bres = reshape(bData, [size(bData,1)*size(bData, 2), size(bData,3)*size(bData,4)]);
+    vres = reshape(vData, [size(vData,1)*size(vData, 2), size(vData,3)*size(vData,4)]);
+    figure;
+    plot(mean(bres,1), 'b')
+    hold on
+    plot(mean(vres,1), 'r')
+    
+    side = input('Blue = blue channel; red = violet channel? 1-yes; 2-no; 0-skip\n Enter side: ');
+    fprintf('Performing hemodynamic correction...\n');
+
+    if side == 2
+        % Initial guess was wrong, flip back blue and violet
+        bData = allData(:,:,2:2:end,:);
+        vData = allData(:,:,1:2:end,:);
+    end
+    
+    if side > 0
+        baselineDur = 1:floor(-window(1));
+        data = nan(size(bData), 'single');
+        for i = 1:ntrials
+            bSingle = bData(:,:,:,i);
+            vSingle = vData(:,:,:,i);
+            data(:,:,:,i) = Widefield_HemoCorrect(bSingle,vSingle,baselineDur,5);
+        end
+    end
 end
 
 
+%% Compute df/f
+if opts.computeDFF
+    if opts.hemoCorrect && side > 0
+        %df/f for blue
+        baselineDur = 1:floor(-window(1));
+        baselineAvg = nanmean(nanmean(bData(:,:, baselineDur, :),3), 4);
+        bData = reshape(bData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor, []); %merge all frames to subtract and divide baseline
+        bData = bsxfun(@minus, bData, baselineAvg); % subtract baseline
+        bData = bsxfun(@rdivide, bData, baselineAvg); % divide baseline
+        bData = reshape(bData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor,nframes/2,ntrials); %shape back to initial form
+
+        % df/f for violet
+        baselineAvg = nanmean(nanmean(vData(:,:, baselineDur, :),3), 4);
+        vData = reshape(vData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor, []); %merge all frames to subtract and divide baseline
+        vData = bsxfun(@minus, vData, baselineAvg); % subtract baseline
+        vData = bsxfun(@rdivide, vData, baselineAvg); % divide baseline
+        vData = reshape(vData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor,nframes/2,ntrials); %shape back to initial form
+        
+        output.data = data;
+        output.bData = bData;
+        output.vData = vData;
+    else
+        % just df/f for blue
+        fprintf('Frames extracted. Computing df/f...\n');
+        baselineDur = 1:floor(-window(1));
+        baselineAvg = nanmean(nanmean(allData(:,:, baselineDur, :),3), 4);
+        allData = reshape(allData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor, []); %merge all frames to subtract and divide baseline
+        allData = bsxfun(@minus, allData, baselineAvg); % subtract baseline
+        allData = bsxfun(@rdivide, allData, baselineAvg); % divide baseline
+        allData = reshape(allData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor,nframes,ntrials); %shape back to initial form
+        
+        output.data = allData;
+        output.bData = allData;
+        output.vData = nan;
+    end
+end
 end

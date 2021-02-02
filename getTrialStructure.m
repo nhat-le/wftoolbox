@@ -29,14 +29,20 @@ feedbackTimes = block.events.feedbackTimes;
 % Reduce to the smallest size, and eliminate the first trial(bad timing)
 N = min([numel(target), numel(feedback), numel(responses), numel(rewardDelays),...
     numel(feedbackTimesFromTimeline)]);
-trialInfo.target = target(2:N);
-trialInfo.feedback = feedback(2:N);
-trialInfo.responses = responses(2:N);
-trialInfo.rewardDelays = rewardDelays(2:N);
-trialInfo.responseTimes = responseTimes(2:N);
-trialInfo.feedbackTimes = feedbackTimes(2:N);
-trialInfo.feedbackTimesFromTimeline = feedbackTimesFromTimeline(2:N);
-trialInfo.feedbackFrameIdxFromTimeline = feedbackFrameIdxFromTimeline(2:N)';
+
+if opts.ignoreFirstTrial
+    firstidx = 2;
+else
+    firstidx = 1;
+end
+trialInfo.target = target(firstidx:N);
+trialInfo.feedback = feedback(firstidx:N);
+trialInfo.responses = responses(firstidx:N);
+trialInfo.rewardDelays = rewardDelays(firstidx:N);
+trialInfo.responseTimes = responseTimes(firstidx:N);
+trialInfo.feedbackTimes = feedbackTimes(firstidx:N);
+trialInfo.feedbackTimesFromTimeline = feedbackTimesFromTimeline(firstidx:N);
+trialInfo.feedbackFrameIdxFromTimeline = feedbackFrameIdxFromTimeline(firstidx:N)';
 
 
 % Find closest frames to tstarts

@@ -1,10 +1,15 @@
 function template = alignImages(opts, data)
-%% Load the reference and data iamges
+%% Load the reference and data images
 img = TIFFStack(opts.refImgPath);
 refImg = img(:,:,1);
 
-dataImg = TIFFStack(fullfile(opts.datafiles(1).folder, opts.datafiles(1).name));
-singleImg = dataImg(:,:,1);
+% dataImg = TIFFStack(fullfile(opts.datafiles(1).folder, opts.datafiles(1).name));
+% singleImg = dataImg(:,:,5);
+singleImg = squeeze(data.bData(:,:,1,1));
+
+
+% Resize singleImg to match dimensions of reference
+singleImg = imresize(singleImg, size(refImg));
 
 %% Get points for alignment
 figure('Position', [39 378 961 420]);
@@ -74,17 +79,28 @@ areaid = areaid(areaid ~= 0);
 
 aggAllAreas = [];
 fprintf('Extracting area data...\n');
+
+load('allenDorsalMapSM.mat', 'dorsalMaps');
+tbl = dorsalMaps.labelTable;
+template.areaStrings = {};
 for i = 1:numel(areaid)
     idx = areaid(i);
+    % Get the area name
+    aName = tbl.abbreviation(tbl.id == abs(idx));
+    aName = aName{1};
+    template.areaStrings{i} = aName;
+    
     mask = template.atlas == idx;
-    areaData = data .* mask;
+    areaData = imresize(data.data, size(refImg) / opts.resizeFactor) .* mask;
     areaData = reshape(areaData, size(areaData, 1) * size(areaData, 2), []);
     aggData = sum(areaData, 1);
     aggAllAreas(i,:) = aggData;
 end 
 
+
 % aggAllAreas has shape nAreas x nTimepoints x nTrials
-aggAllAreas = reshape(aggAllAreas, numel(areaid), size(data, 3), []);
+aggAllAreas = reshape(aggAllAreas, numel(areaid), size(data.bData, 3), []);
 template.aggData = aggAllAreas;
+template.areaid = areaid;
 
 end
