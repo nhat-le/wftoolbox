@@ -3,9 +3,9 @@ function template = alignImages(opts, data)
 img = TIFFStack(opts.refImgPath);
 refImg = img(:,:,1);
 
-% dataImg = TIFFStack(fullfile(opts.datafiles(1).folder, opts.datafiles(1).name));
-% singleImg = dataImg(:,:,5);
-singleImg = squeeze(data.bData(:,:,1,1));
+dataImg = TIFFStack(fullfile(opts.datafiles(1).folder, opts.datafiles(1).name));
+singleImg = dataImg(:,:,5);
+% singleImg = squeeze(data.data(:,:,1,1));
 
 
 % Resize singleImg to match dimensions of reference
@@ -45,7 +45,7 @@ load(opts.refAtlasPath, 'atlas', 'areanames');
 borders = imwarp(borders,tform,'OutputView',imref2d(size(refImg)));
 atlas = imwarp(atlas,tform,'nearest', 'OutputView',imref2d(size(refImg)));
 subplot(122)
-imagesc(singleImg + uint16(borders) * 1000)
+imagesc(uint16(singleImg) + uint16(borders) * 1000)
 hold on
 plot(rotpoints(:,1),rotpoints(:,2),'xw','linewidth',2);
 plot(imgPoints(:,1),imgPoints(:,2),'xr','linewidth',2);

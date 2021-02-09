@@ -2,26 +2,28 @@
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
 % example 1
-opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e50_011021';
-opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e50/2021-01-10/2';
+% opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e50_011021';
+% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e50/2021-01-10/2';
 
 % example 2
 % opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/Dec2020/e54-12272020/e54blockworld';
 % opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27/1';
 
 % example 3 (with hemocorrection)
-% opts.filePath = '/Volumes/My Passport/2p1/Jan2021/e54blockworld2';
-% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2021-01-23/3';
+opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e54_012321';
+opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2021-01-23/3';
 
 opts.refImgPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/surfaceRotated2.tif';
 opts.refAtlasPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/atlas_E54.mat';
-opts.alignBorders = 0;
+
+opts.alignBorders = 1; % to return
 opts.motionCorrect = 0;
 opts.hemoCorrect = 1;
-opts.ignoreFirstTrial = 0;
+opts.ignoreFirstTrial = 1;
 
 opts.resizeFactor = 2;
 opts.dt = [-0.5 1]; %what window (secs) to take around the alignment point
+% two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
 opts.computeDFF = 1;
 
@@ -71,7 +73,7 @@ end
 
 
 %% Browsing the raw data and average stack
-compareMovie(allData.data); %use this GUI to browse the widefield data stack
+compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
 
 
 %% Split into left or right trials
@@ -84,15 +86,17 @@ criterion2.response = nan; %-1 or 1; filter only left/right trials
 criterion2.delay = nan; %'early' or 'late'; filter trials with or without delay
 
 
-[filteredIncorr, avgCorr] = filterTrials(allData.data, criterion1, trialInfo);
-[filteredCorr, avgIncorr] = filterTrials(allData.data, criterion2, trialInfo);
+[filteredIncorr, avgIncorr] = filterTrials(allData.data, criterion1, trialInfo);
+[filteredCorr, avgCorr] = filterTrials(allData.data, criterion2, trialInfo);
 
 %%
-visualizePeakInfo(avgCorr, opts, timingInfo)
+visualizePeakInfo(avgIncorr, opts, timingInfo)
 
 
 
 %% Visualize the areal summary
-visualizeAreaSummary(allData, 'left', 'pks', template, timingInfo)
+idx = visualizeAreaSummary(allData, avgCorr, 'left', 'pks', template, timingInfo);
+idx2 = visualizeAreaSummary(allData, avgIncorr, 'left', idx, template, timingInfo);
+
 
 

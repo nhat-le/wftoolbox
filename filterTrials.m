@@ -60,6 +60,7 @@ filterIdx = feedbackIdx .* responseIdx .* delayIdx;
 filteredArr = allData(:,:,:,logical(filterIdx));
 avgArr.arr = mean(filteredArr, 4);
 avgArr.criterion = criterion;
+avgArr.filterIdx = filterIdx;
 
    
 
