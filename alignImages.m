@@ -20,6 +20,11 @@ title('Select landmarks on the reference, then press enter');
 [x1,y1] = getpts;
 refPoints=[x1 y1];
 plot(refPoints(:,1),refPoints(:,2),'xw','linewidth',2);
+labelArr = {};
+for i = 1:size(refPoints, 1)
+    labelArr{i} = num2str(i);
+end
+text(refPoints(:,1) + 10,refPoints(:,2) + 10, labelArr, 'Color', 'w');
 
 subplot(122)
 imagesc(singleImg);
@@ -78,12 +83,16 @@ areaid = unique(template.atlas(:));
 areaid = areaid(areaid ~= 0);
 
 aggAllAreas = [];
-fprintf('Extracting area data...\n');
+% fprintf('Extracting area data...\n');
 
 load('allenDorsalMapSM.mat', 'dorsalMaps');
 tbl = dorsalMaps.labelTable;
 template.areaStrings = {};
+f = waitbar(0, 'Extracting area data...');
+resizedData = imresize(data.data, size(refImg) / opts.resizeFactor);
+resizedData2 = reshape(resizedData, size(resizedData, 1) * size(resizedData, 2), []);
 for i = 1:numel(areaid)
+    waitbar(i/numel(areaid), f, 'Extracting area data...');
     idx = areaid(i);
     % Get the area name
     aName = tbl.abbreviation(tbl.id == abs(idx));
@@ -91,11 +100,14 @@ for i = 1:numel(areaid)
     template.areaStrings{i} = aName;
     
     mask = template.atlas == idx;
-    areaData = imresize(data.data, size(refImg) / opts.resizeFactor) .* mask;
-    areaData = reshape(areaData, size(areaData, 1) * size(areaData, 2), []);
-    aggData = sum(areaData, 1);
+    maskUnroll = reshape(mask, [], 1);
+%     areaData = resizedData .* mask;
+%     areaData = reshape(areaData, size(areaData, 1) * size(areaData, 2), []);
+    areaData = resizedData2(mask,:);
+    aggData = sum(areaData, 1) / sum(maskUnroll);
     aggAllAreas(i,:) = aggData;
 end 
+close(f);
 
 
 % aggAllAreas has shape nAreas x nTimepoints x nTrials

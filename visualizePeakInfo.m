@@ -44,7 +44,12 @@ maxresp = reshape(maxresp, [size(arr, 1), size(arr, 2)]);
 
 %% Show the peak time plots
 figure;
-imagesc((idx + window(1)/2) / (fs/2));
+if opts.hemoCorrect% blue + violet
+    imagesc((idx + window(1)/2) / (fs/2));
+else % blue only
+    imagesc((idx + window(1)) / fs);
+end
+
 colormap hot
 set(gca, 'FontSize', 16)
 title(titleStr)

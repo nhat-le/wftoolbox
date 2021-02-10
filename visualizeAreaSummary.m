@@ -1,4 +1,4 @@
-function idx = visualizeAreaSummary(data, avgArr, side, sortBy, template, timingInfo)
+function [idx, pkTimeInfo] = visualizeAreaSummary(data, avgArr, templateOpts, template, timingInfo)
 % data: allData structure returned from alignTrials
 % side: 'left' or 'right': side of the brain
 % sortBy: 'pks' for peak amplitudes, or 'pkTimes' for peak times
@@ -6,6 +6,9 @@ function idx = visualizeAreaSummary(data, avgArr, side, sortBy, template, timing
 % template, timingInfo: options as returned
 % Returns: idx, the sorted indices
 
+side = templateOpts.brainSide;
+sortBy = templateOpts.sortBy;
+normalize = templateOpts.normalize;
 
 window = data.window;
 % Get the mean for each area
@@ -26,15 +29,35 @@ areaStringFilt = template.areaStrings(template.areaid * side > 0);
 if strcmp(sortBy, 'pks')
     [~,idx] = sort(pks, 'descend');
 elseif strcmp(sortBy, 'pkTimes')
-    [~,idx] = sort(pkTimes, 'descend');
+    [~,idx] = sort(pkTimes);
 else
     idx = sortBy;
 end
 
+sortedTimes = pkTimes(idx);
+
+
+if ~isnan(data.vData)
+    sortedTimes = (sortedTimes + window(1)/2) / (timingInfo.fs/2);
+else
+    sortedTimes = (sortedTimes + window(1)) / (timingInfo.fs);
+end
+
 areaSort = areaFilt(idx,:);
 figure;
-imagesc(areaSort, 'XData', ((window(1):window(2))) / timingInfo.fs);
+
+if normalize
+    imagesc(areaSort ./ pks(idx), 'XData', ((window(1):window(2))) / timingInfo.fs);
+else
+    imagesc(areaSort, 'XData', ((window(1):window(2))) / timingInfo.fs);
+end
+
 colormap gray
 yticks(1:numel(pks))
 yticklabels(areaStringFilt(idx))
+
+pkTimeInfo.areas = areaStringFilt(idx);
+pkTimeInfo.pkTimes = sortedTimes;
+pkTimeInfo.peaks = pks(idx)
+
 end

@@ -6,19 +6,19 @@ warning('off', 'imageio:tiffmexutils:libtiffWarning')
 % opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e50/2021-01-10/2';
 
 % example 2
-% opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/Dec2020/e54-12272020/e54blockworld';
-% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27/1';
+opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/Dec2020/e54-12272020/e54blockworld';
+opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27/1';
 
 % example 3 (with hemocorrection)
-opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e54_012321';
-opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2021-01-23/3';
+% opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e54_012321';
+% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2021-01-23/3';
 
 opts.refImgPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/surfaceRotated2.tif';
 opts.refAtlasPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/atlas_E54.mat';
 
 opts.alignBorders = 1; % to return
 opts.motionCorrect = 0;
-opts.hemoCorrect = 1;
+opts.hemoCorrect = 0;
 opts.ignoreFirstTrial = 1;
 
 opts.resizeFactor = 2;
@@ -95,8 +95,14 @@ visualizePeakInfo(avgIncorr, opts, timingInfo)
 
 
 %% Visualize the areal summary
-idx = visualizeAreaSummary(allData, avgCorr, 'left', 'pks', template, timingInfo);
-idx2 = visualizeAreaSummary(allData, avgIncorr, 'left', idx, template, timingInfo);
+templateOpts.brainSide = 'left'; % 'left' or 'right'
+templateOpts.sortBy = 'pks'; %'pks' or 'pkTimes'
+templateOpts.normalize = 0;
+
+[idx, sortedTimes] = visualizeAreaSummary(allData, avgCorr, templateOpts, template, timingInfo);
+
+templateOpts.sortBy = idx; % sort by the same order as previous
+[idx2,sortedTimes2] = visualizeAreaSummary(allData, avgIncorr, templateOpts, template, timingInfo);
 
 
 
