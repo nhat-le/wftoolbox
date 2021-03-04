@@ -97,8 +97,13 @@ for i = 1:numel(areaid)
     % Get the area name
     aName = tbl.abbreviation(tbl.id == abs(idx));
     aName = aName{1};
+    if idx > 0
+        aName = ['L-' aName];
+    else
+        aName = ['R-' aName];
+    end
     template.areaStrings{i} = aName;
-    
+
     mask = template.atlas == idx;
     maskUnroll = reshape(mask, [], 1);
 %     areaData = resizedData .* mask;
