@@ -4,6 +4,13 @@ function [filteredArr, avgArr] = filterTrials(allData, criterion, trialInfo)
 % criterion.delay = 'early'; %'early' or 'late'; filter trials with or without delay
 
 %% First, parse the criterion structure
+if isnan(criterion.trialSubset)
+    trialSubset = 1:size(allData, 4);
+else
+    trialSubset = criterion.trialSubset;
+end
+
+
 if ~isfield(criterion, 'feedback')
     criterion.feedback = nan;
 end
@@ -56,6 +63,7 @@ if ~isnan(criterion.delay)
 end
 
 filterIdx = feedbackIdx .* responseIdx .* delayIdx;
+filterIdx = filterIdx(trialSubset);
 
 filteredArr = allData(:,:,:,logical(filterIdx));
 avgArr.arr = mean(filteredArr, 4);

@@ -143,28 +143,35 @@ if opts.hemoCorrect
     % visualize the channels
     bres = reshape(bData, [size(bData,1)*size(bData, 2), size(bData,3)*size(bData,4)]);
     vres = reshape(vData, [size(vData,1)*size(vData, 2), size(vData,3)*size(vData,4)]);
-    figure;
+    h = figure;
     plot(mean(bres,1), 'b')
     hold on
     plot(mean(vres,1), 'r')
     
     side = input('Blue = blue channel; red = violet channel? 1-yes; 2-no; 0-skip\n Enter side: ');
-    fprintf('Performing hemodynamic correction...\n');
-
+%     fprintf('Performing hemodynamic correction...\n');
+    close(h);
     if side == 2
         % Initial guess was wrong, flip back blue and violet
-        bData = allData(:,:,2:2:end,:);
-        vData = allData(:,:,1:2:end,:);
+        temp = bData;
+        bData = vData; %allData(:,:,2:2:end,:); %TODO: just copy 
+        vData = temp; %allData(:,:,1:2:end,:);
+        clear temp
     end
     
+    % Perform low-pass filter on the violet data
+    
+    f = waitbar(0, 'Performing hemodynamic correction...');
     if side > 0
-        baselineDur = 1:floor(-window(1));
+        baselineDur = 1:floor(-floor(window(1)/2));
         data = nan(size(bData), 'single');
         for i = 1:ntrials
+            waitbar(i/ntrials, f);
             bSingle = bData(:,:,:,i);
             vSingle = vData(:,:,:,i);
             data(:,:,:,i) = Widefield_HemoCorrect(bSingle,vSingle,baselineDur,5);
         end
+        close(f)
     end
 end
 
@@ -172,6 +179,7 @@ end
 %% Compute df/f
 if opts.computeDFF
     if opts.hemoCorrect && side > 0
+        fprintf('Frames extracted. Computing df/f...\n');
         %df/f for blue
         baselineDur = 1:floor(-window(1));
         baselineAvg = nanmean(nanmean(bData(:,:, baselineDur, :),3), 4);
