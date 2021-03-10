@@ -181,7 +181,7 @@ if opts.computeDFF
     if opts.hemoCorrect && side > 0
         fprintf('Frames extracted. Computing df/f...\n');
         %df/f for blue
-        baselineDur = 1:floor(-window(1));
+        baselineDur = 1:floor(-floor(window(1)/2));
         baselineAvg = nanmean(nanmean(bData(:,:, baselineDur, :),3), 4);
         bData = reshape(bData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor, []); %merge all frames to subtract and divide baseline
         bData = bsxfun(@minus, bData, baselineAvg); % subtract baseline
@@ -201,7 +201,7 @@ if opts.computeDFF
     else
         % just df/f for blue
         fprintf('Frames extracted. Computing df/f...\n');
-        baselineDur = 1:floor(-window(1));
+        baselineDur = 1:floor(-floor(window(1)/2));
         baselineAvg = nanmean(nanmean(allData(:,:, baselineDur, :),3), 4);
         allData = reshape(allData, imgDim(1)/opts.resizeFactor, imgDim(2)/opts.resizeFactor, []); %merge all frames to subtract and divide baseline
         allData = bsxfun(@minus, allData, baselineAvg); % subtract baseline

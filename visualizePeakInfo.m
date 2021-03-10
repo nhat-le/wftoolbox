@@ -1,4 +1,4 @@
-function visualizePeakInfo(data, opts, timingInfo)
+function [maxresp, respTimes] = visualizePeakInfo(data, opts, timingInfo)
 arr = data.arr;
 criterion = data.criterion;
 
@@ -45,10 +45,11 @@ maxresp = reshape(maxresp, [size(arr, 1), size(arr, 2)]);
 %% Show the peak time plots
 figure;
 if opts.hemoCorrect% blue + violet
-    imagesc((idx + window(1)/2) / (fs/2));
+    respTimes = (idx + window(1)/2) / (fs/2);
 else % blue only
-    imagesc((idx + window(1)) / fs);
+    respTimes = (idx + window(1)) / fs;
 end
+imagesc(respTimes);
 
 colormap hot
 set(gca, 'FontSize', 16)

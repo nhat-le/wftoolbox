@@ -39,11 +39,13 @@ sortedTimes = pkTimes(idx);
 
 if ~isnan(data.vData)
     sortedTimes = (sortedTimes + window(1)/2) / (timingInfo.fs/2);
+    meanTimes = mean(areaFilt(:,1:floor(-window(1)/2)), 2);
 else
     sortedTimes = (sortedTimes + window(1)) / (timingInfo.fs);
+    meanTimes = mean(areaFilt(:,1:-window(1)), 2);
 end
 
-areaSort = areaFilt(idx,:);
+areaSort = areaFilt(idx,:) - meanTimes(idx); % make mean of baseline to be 0
 figure;
 
 if normalize
