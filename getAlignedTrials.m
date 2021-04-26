@@ -5,6 +5,10 @@ ntrials = trialInfo.ntrials;
 nFiles = numel(opts.datafiles);
 stem = opts.stem;
 
+if ~isfield(opts, 'pickSide')
+    opts.pickSide = 0;
+end
+
 % For hemocorrect, make sure window is even num of elements
 if opts.hemoCorrect
     if mod(nframes, 2) == 1
@@ -139,18 +143,26 @@ side = 0;
 if opts.hemoCorrect
     bData = allData(:,:,1:2:end,:);
     vData = allData(:,:,2:2:end,:);
-
-    % visualize the channels
-    bres = reshape(bData, [size(bData,1)*size(bData, 2), size(bData,3)*size(bData,4)]);
-    vres = reshape(vData, [size(vData,1)*size(vData, 2), size(vData,3)*size(vData,4)]);
-    h = figure;
-    plot(mean(bres,1), 'b')
-    hold on
-    plot(mean(vres,1), 'r')
     
-    side = input('Blue = blue channel; red = violet channel? 1-yes; 2-no; 0-skip\n Enter side: ');
-%     fprintf('Performing hemodynamic correction...\n');
-    close(h);
+    
+    % visualize the channels if user wants
+    if opts.pickSide
+        bres = reshape(bData, [size(bData,1)*size(bData, 2), size(bData,3)*size(bData,4)]);
+        vres = reshape(vData, [size(vData,1)*size(vData, 2), size(vData,3)*size(vData,4)]);
+
+        h = figure;
+        plot(mean(bres,1), 'b')
+        hold on
+        plot(mean(vres,1), 'r')
+
+
+        side = input('Blue = blue channel; red = violet channel? 1-yes; 2-no; 0-skip\n Enter side: ');
+    %     fprintf('Performing hemodynamic correction...\n');
+        close(h);
+    else
+        side = 2;
+    end
+    
     if side == 2
         % Initial guess was wrong, flip back blue and violet
         temp = bData;
