@@ -13,6 +13,8 @@ opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27
 % opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e54_012321';
 % opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2021-01-23/3';
 
+
+
 opts.refImgPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/surfaceRotated2.tif';
 opts.refAtlasPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/atlas_E54.mat';
 
@@ -21,7 +23,7 @@ opts.motionCorrect = 0;
 opts.hemoCorrect = 0;
 opts.ignoreFirstTrial = 1;
 
-opts.resizeFactor = 2;
+opts.resizeFactor = 5;
 opts.dt = [-0.5 1]; %what window (secs) to take around the alignment point
 % two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
@@ -73,24 +75,31 @@ end
 
 
 %% Browsing the raw data and average stack
-compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
-
+% compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
+compareMovie(filteredIncorr);
 
 %% Split into left or right trials
 criterion1.feedback = 0; %1 or 0; filter only rewarded/non-rewarded trials
 criterion1.response = nan; %-1 or 1; filter only left/right trials
 criterion1.delay = nan; %'early' or 'late'; filter trials with or without delay
+criterion1.trialSubset = nan;
 
 criterion2.feedback = 1; %1 or 0; filter only rewarded/non-rewarded trials
 criterion2.response = nan; %-1 or 1; filter only left/right trials
 criterion2.delay = nan; %'early' or 'late'; filter trials with or without delay
+criterion2.trialSubset = nan;
 
 
 [filteredIncorr, avgIncorr] = filterTrials(allData.data, criterion1, trialInfo);
 [filteredCorr, avgCorr] = filterTrials(allData.data, criterion2, trialInfo);
 
 %%
-visualizePeakInfo(avgIncorr, opts, timingInfo)
+[maxresp, respTimes] = visualizePeakInfo(avgIncorr, opts, timingInfo);
+
+
+
+%% Find a mask to reduce number of active pixels
+save('regionData_e54_122720.mat', 'datamat', 'atlas');
 
 
 
