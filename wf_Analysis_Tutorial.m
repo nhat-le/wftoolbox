@@ -1,29 +1,21 @@
 %% Input the settings for the analysis here
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
-% example 1
-% opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e50_011021';
-% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e50/2021-01-10/2';
-
-% example 2
-opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/Dec2020/e54-12272020/e54blockworld';
-opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27/1';
-
-% example 3 (with hemocorrection)
-% opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/wfdata/e54_012321';
-% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2021-01-23/3';
+opts.filePath = '/Volumes/2P1DATA/data/april2021/042821/f04';
+opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/f04/2021-04-28/1';
+opts.saveFolder = nan; % if nan, will save in the same folder as filePath
+opts.animal = 'f04';
+opts = configurePaths(opts);
 
 
+opts.alignBorders = 1; % if borders should be aligned using Allen atlas template, usually 1
+opts.motionCorrect = 0; 
+opts.hemoCorrect = 1;
+opts.ignoreFirstTrial = 1; % if 1, skip first trial (timing issues)
+opts.pickSide = 0; % if pickside = 0, default order for blue & violet, otherwise, let user decide which channel is blue
+opts.quickSave = 1; % if 1, skip visualization, save the processed data
 
-opts.refImgPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/surfaceRotated2.tif';
-opts.refAtlasPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/atlas_E54.mat';
-
-opts.alignBorders = 1; % to return
-opts.motionCorrect = 0;
-opts.hemoCorrect = 0;
-opts.ignoreFirstTrial = 1;
-
-opts.resizeFactor = 5;
+opts.resizeFactor = 2;
 opts.dt = [-0.5 1]; %what window (secs) to take around the alignment point
 % two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
@@ -43,30 +35,6 @@ opts.stem = opts.datafiles(1).name(1:end-4);
 allData = getAlignedTrials(opts, trialInfo, timingInfo);
 
 
-%%
-% TODO: visualize ROI activity
-% roiCentroids = floor([202 119; 171 146; 280 195]);
-roiCentroids = floor([202 119; 171 146; 280 195]/5);
-
-pointerSize = 10;
-figure('Position', [43, 406, 1086, 392]);
-a1 = subplot(131);
-plotROIAverages(allData.bData(:,:,:,trialInfo.feedback == 0), roiCentroids, ...
-    pointerSize, opts, timingInfo, allData.window)
-title('Blue, correct')
-
-a2 = subplot(132);
-plotROIAverages(allData.vData(:,:,:,trialInfo.feedback == 0), roiCentroids, ...
-    pointerSize, opts, timingInfo, allData.window)
-title('Violet, correct')
-
-a3 = subplot(133);
-plotROIAverages(allData.data(:,:,:,trialInfo.feedback == 0), roiCentroids, ...
-    pointerSize, opts, timingInfo, allData.window)
-title('Corrected, correct')
-
-linkaxes([a1, a2, a3])
-
 %% Get the aggregate area information
 % Alignment
 if opts.alignBorders
@@ -74,44 +42,94 @@ if opts.alignBorders
 end
 
 
+%% Split into left or right trials
+if ~opts.quickSave
+    criterion1.feedback = 0; %1 or 0; filter only rewarded/non-rewarded trials
+    criterion1.response = nan; %-1 or 1; filter only left/right trials
+    criterion1.delay = 'late'; %'early' or 'late'; filter trials with or without delay
+    criterion1.trialSubset = nan;
+
+    criterion2.feedback = 1; %1 or 0; filter only rewarded/non-rewarded trials
+    criterion2.response = nan; %-1 or 1; filter only left/right trials
+    criterion2.delay = 'late'; %'early' or 'late'; filter trials with or without delay
+    criterion2.trialSubset = nan;
+
+
+    [filteredIncorr, avgIncorr] = filterTrials(allData.data, criterion1, trialInfo);
+    [filteredCorr, avgCorr] = filterTrials(allData.data, criterion2, trialInfo);
+end
 %% Browsing the raw data and average stack
 % compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
-compareMovie(filteredIncorr);
-
-%% Split into left or right trials
-criterion1.feedback = 0; %1 or 0; filter only rewarded/non-rewarded trials
-criterion1.response = nan; %-1 or 1; filter only left/right trials
-criterion1.delay = nan; %'early' or 'late'; filter trials with or without delay
-criterion1.trialSubset = nan;
-
-criterion2.feedback = 1; %1 or 0; filter only rewarded/non-rewarded trials
-criterion2.response = nan; %-1 or 1; filter only left/right trials
-criterion2.delay = nan; %'early' or 'late'; filter trials with or without delay
-criterion2.trialSubset = nan;
-
-
-[filteredIncorr, avgIncorr] = filterTrials(allData.data, criterion1, trialInfo);
-[filteredCorr, avgCorr] = filterTrials(allData.data, criterion2, trialInfo);
-
-%%
-[maxresp, respTimes] = visualizePeakInfo(avgIncorr, opts, timingInfo);
-
-
-
-%% Find a mask to reduce number of active pixels
-save('regionData_e54_122720.mat', 'datamat', 'atlas');
-
-
+if ~opts.quickSave
+    compareMovie(filteredCorr);
+end
 
 %% Visualize the areal summary
-templateOpts.brainSide = 'left'; % 'left' or 'right'
-templateOpts.sortBy = 'pks'; %'pks' or 'pkTimes'
-templateOpts.normalize = 0;
+if ~opts.quickSave
+    [maxresp, respTimes] = visualizePeakInfo(avgCorr, opts, timingInfo);
 
-[idx, sortedTimes] = visualizeAreaSummary(allData, avgCorr, templateOpts, template, timingInfo);
+    templateOpts.brainSide = 'left'; % 'left' or 'right'
+    templateOpts.sortBy = 'pks'; %'pks' or 'pkTimes'
+    templateOpts.normalize = 0;
 
-templateOpts.sortBy = idx; % sort by the same order as previous
-[idx2,sortedTimes2] = visualizeAreaSummary(allData, avgIncorr, templateOpts, template, timingInfo);
+    [idx, sortedTimes] = visualizeAreaSummary(allData, avgCorr, templateOpts, template, timingInfo);
+
+    templateOpts.sortBy = idx; % sort by the same order as previous
+    [idx2,sortedTimes2] = visualizeAreaSummary(allData, avgIncorr, templateOpts, template, timingInfo);
+end
+
+%% Save the pix array
+bData = allData.bData;
+vData = allData.vData;
+data = allData.data;
+feedback = trialInfo.feedback;
+response = trialInfo.responses;
+target = trialInfo.target;
+atlas = template.atlas;
+fullsaveName = sprintf('regionData_%s_%spix.mat', opts.animal, opts.datestring);
+
+save(fullfile(opts.saveFolder, fullsaveName), 'bData', 'vData', 'data',...
+    'feedback', 'response', 'target', 'atlas', 'trialInfo', 'timingInfo',...
+    'template', 'opts', '-v7.3')
 
 
 
+
+function opts = configurePaths(opts)
+if isnan(opts.saveFolder)
+    opts.saveFolder = opts.filePath;
+end
+
+
+masterPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1';
+switch opts.animal
+    case 'e53'
+        fileRefImgPath = 'e53Template/e53surface.tif';
+        fileRefAtlasPath = 'e53Template/atlas_E53.mat';
+    case 'e54'
+        fileRefImgPath = 'e54Template/e54surface.tif';
+        fileRefAtlasPath = 'e54Template/atlas_E54.mat';
+    case 'f01'
+        fileRefImgPath = 'f01Template/f01surface.tif';
+        fileRefAtlasPath = 'f01Template/atlas_F01.mat';
+    case 'f02'
+        fileRefImgPath = 'f02Template/f02surface.tif';
+        fileRefAtlasPath = 'f02Template/atlas_F02.mat';
+    case 'f03'
+        fileRefImgPath = 'f03Template/f03surface.tif';
+        fileRefAtlasPath = 'f03Template/atlas_F03.mat';
+    case 'f04'
+        fileRefImgPath = 'f04Template/f04surface.tif';
+        fileRefAtlasPath = 'f04Template/atlas_F04.mat';
+        
+        
+end
+
+opts.refImgPath = fullfile(masterPath, fileRefImgPath);
+opts.refAtlasPath = fullfile(masterPath, fileRefAtlasPath);
+
+% Get the parts
+fileparts = strsplit(opts.filePath, '/');
+opts.datestring = fileparts{end-1};
+
+end
