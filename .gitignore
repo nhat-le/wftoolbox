@@ -2,3 +2,4 @@
 *.mat
 figures/
 Murat_tca_jobtalk/
+*.DS_Store
