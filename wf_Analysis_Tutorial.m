@@ -1,8 +1,9 @@
 %% Input the settings for the analysis here
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
-opts.filePath = '/Volumes/2P1DATA/data/april2021/042821/f04';
-opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/f04/2021-04-28/1';
+%TODO: make computer-general
+opts.filePath = 'E:/data/april2021/042821/f04';
+opts.trialDataPath = 'D:/Dropbox (MIT)/Nhat/Rigbox/f04/2021-04-28/1';
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
 opts.animal = 'f04';
 opts = configurePaths(opts);
@@ -101,7 +102,7 @@ if isnan(opts.saveFolder)
 end
 
 
-masterPath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1';
+masterPath = 'templates';
 switch opts.animal
     case 'e53'
         fileRefImgPath = 'e53Template/e53surface.tif';
