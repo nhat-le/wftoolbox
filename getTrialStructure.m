@@ -6,7 +6,8 @@ load(fullfile(files(1).folder, files(1).name), 'Timeline');
 bfile = dir(fullfile(opts.trialDataPath, '*Block.mat'));
 load(fullfile(bfile(1).folder, bfile(1).name), 'block');
 
-syncsignal = Timeline.rawDAQData(:,3);
+%TODO: Fix the channel id for the sync signal (changed!)
+syncsignal = Timeline.rawDAQData(:,5);
 dsync = diff(syncsignal);
 feedbackTimesFromTimeline = Timeline.rawDAQTimestamps(dsync > 2);
 frametimesIdx = find(diff(Timeline.rawDAQData(:,2)));
