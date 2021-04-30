@@ -1,9 +1,11 @@
 %% Input the settings for the analysis here
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
-%TODO: make computer-general
-opts.filePath = 'E:/data/april2021/042821/f04';
-opts.trialDataPath = 'D:/Dropbox (MIT)/Nhat/Rigbox/f04/2021-04-28/1';
+%Note: code will add the root for you, only need to specify relative path
+opts.filePath = 'data/april2021/042821/f04';
+opts.trialDataPath = 'Rigbox/f04/2021-04-28/1';
+opts.relpath = 1; %is the path absolute or relative?
+
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
 opts.animal = 'f04';
 opts = configurePaths(opts);
@@ -17,7 +19,7 @@ opts.pickSide = 0; % if pickside = 0, default order for blue & violet, otherwise
 opts.quickSave = 1; % if 1, skip visualization, save the processed data
 
 opts.resizeFactor = 2;
-opts.dt = [-0.5 1]; %what window (secs) to take around the alignment point
+opts.dt = [-1.5 1]; %what window (secs) to take around the alignment point
 % two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
 opts.computeDFF = 1;
@@ -62,7 +64,7 @@ end
 %% Browsing the raw data and average stack
 % compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
 if ~opts.quickSave
-    compareMovie(filteredCorr);
+    compareMovie(filteredIncorr);
 end
 
 %% Visualize the areal summary
@@ -97,10 +99,23 @@ save(fullfile(opts.saveFolder, fullsaveName), 'bData', 'vData', 'data',...
 
 
 function opts = configurePaths(opts)
+% Append computer-dependent root to file paths
+compname = getenv('computername');
+switch compname
+    case 'DESKTOP-AR62OFK'
+        filerootpath = 'E:/';
+        trialDataRootPath = 'D:/Dropbox (MIT)/Nhat';
+end
+
+if opts.relpath
+    opts.filePath = fullfile(filerootpath, opts.filePath); 
+    opts.trialDataPath = fullfile(trialDataRootPath, opts.trialDataPath); 
+end
+
+% Save in the same folder as the file path
 if isnan(opts.saveFolder)
     opts.saveFolder = opts.filePath;
 end
-
 
 masterPath = 'templates';
 switch opts.animal
@@ -122,6 +137,8 @@ switch opts.animal
     case 'f04'
         fileRefImgPath = 'f04Template/f04surface.tif';
         fileRefAtlasPath = 'f04Template/atlas_F04.mat';
+    otherwise
+        error('Animal template not found');
         
         
 end
@@ -130,7 +147,12 @@ opts.refImgPath = fullfile(masterPath, fileRefImgPath);
 opts.refAtlasPath = fullfile(masterPath, fileRefAtlasPath);
 
 % Get the parts
-fileparts = strsplit(opts.filePath, '/');
-opts.datestring = fileparts{end-1};
+if ismember('/', opts.filePath)
+    fileparts = strsplit(opts.filePath, '/');
+    opts.datestring = fileparts{end-1};
+else
+    fileparts = strsplit(opts.filePath, '\');
+    opts.datestring = fileparts{end-1};
+end
 
 end
