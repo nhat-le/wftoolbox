@@ -1,10 +1,10 @@
 %% Input the settings for the analysis here
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
-opts.filePath = '/Volumes/2P1DATA/data/april2021/042821/f04';
-opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/f04/2021-04-28/1';
+opts.filePath = '/Volumes/2P1DATA/data/april2021/042821/E57blockworld2';
+opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e57/2021-04-28/2';
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
-opts.animal = 'f04';
+opts.animal = 'e57';
 opts = configurePaths(opts);
 
 
@@ -16,7 +16,7 @@ opts.pickSide = 0; % if pickside = 0, default order for blue & violet, otherwise
 opts.quickSave = 1; % if 1, skip visualization, save the processed data
 
 opts.resizeFactor = 2;
-opts.dt = [-0.5 1]; %what window (secs) to take around the alignment point
+opts.dt = [-1.5 1]; %what window (secs) to take around the alignment point
 % two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
 opts.computeDFF = 1;
@@ -61,7 +61,7 @@ end
 %% Browsing the raw data and average stack
 % compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
 if ~opts.quickSave
-    compareMovie(filteredCorr);
+    compareMovie(filteredIncorr);
 end
 
 %% Visualize the areal summary
