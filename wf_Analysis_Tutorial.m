@@ -4,7 +4,7 @@ warning('off', 'imageio:tiffmexutils:libtiffWarning')
 %Note: code will add the root for you, only need to specify relative path
 opts.filePath = 'F:\May2021\051421\F03';
 opts.trialDataPath = 'C:\LocalExpData\subjects\f03\2021-05-14\1';
-opts.relpath = 0; %is the path absolute or relative?
+
 
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
 opts.animal = 'f03'; % if nan, code will figure out what animal from file path
@@ -120,11 +120,6 @@ switch compname
     case 'DESKTOP-AR62OFK'
         filerootpath = 'E:/';
         trialDataRootPath = 'D:/Dropbox (MIT)/Nhat';
-end
-
-if opts.relpath
-    opts.filePath = fullfile(filerootpath, opts.filePath); 
-    opts.trialDataPath = fullfile(trialDataRootPath, opts.trialDataPath); 
 end
 
 % Save in the same folder as the file path
