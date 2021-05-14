@@ -4,7 +4,6 @@ warning('off', 'imageio:tiffmexutils:libtiffWarning')
 %Note: code will add the root for you, only need to specify relative path
 opts.filePath = 'data/april2021/042821/f04';
 opts.trialDataPath = 'Rigbox/f04/2021-04-28/1';
-opts.relpath = 1; %is the path absolute or relative?
 
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
 opts.animal = 'f04';
@@ -107,18 +106,13 @@ switch compname
         trialDataRootPath = 'D:/Dropbox (MIT)/Nhat';
 end
 
-if opts.relpath
-    opts.filePath = fullfile(filerootpath, opts.filePath); 
-    opts.trialDataPath = fullfile(trialDataRootPath, opts.trialDataPath); 
-end
-
 % Save in the same folder as the file path
 if isnan(opts.saveFolder)
     opts.saveFolder = opts.filePath;
 end
 
 masterPath = 'templates';
-switch opts.animal
+switch lower(opts.animal)
     case 'e53'
         fileRefImgPath = 'e53Template/e53surface.tif';
         fileRefAtlasPath = 'e53Template/atlas_E53.mat';
