@@ -2,24 +2,26 @@
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
 %Note: code will add the root for you, only need to specify relative path
-opts.filePath = 'data/april2021/042821/f04';
-opts.trialDataPath = 'Rigbox/f04/2021-04-28/1';
-opts.relpath = 1; %is the path absolute or relative?
+opts.filePath = 'F:\May2021\051421\F03';
+opts.trialDataPath = 'C:\LocalExpData\subjects\f03\2021-05-14\1';
+opts.relpath = 0; %is the path absolute or relative?
 
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
-opts.animal = 'f04';
+opts.animal = 'f03'; % if nan, code will figure out what animal from file path
 opts = configurePaths(opts);
-
 
 opts.alignBorders = 1; % if borders should be aligned using Allen atlas template, usually 1
 opts.motionCorrect = 0; 
 opts.hemoCorrect = 1;
 opts.ignoreFirstTrial = 1; % if 1, skip first trial (timing issues)
 opts.pickSide = 0; % if pickside = 0, default order for blue & violet, otherwise, let user decide which channel is blue
-opts.quickSave = 1; % if 1, skip visualization, save the processed data
+opts.quickSave = 0; % if 1, skip visualization, save the processed data
 
 opts.resizeFactor = 2;
-opts.dt = [-1.5 1]; %what window (secs) to take around the alignment point
+
+%!!IMPORTANT: CHANGE THIS FOR EACH SESSION TO BE ANALYZED!!
+opts.dt = [-1 1]; %what window (secs) to take around the alignment point
+
 % two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
 opts.computeDFF = 1;
@@ -99,6 +101,19 @@ save(fullfile(opts.saveFolder, fullsaveName), 'bData', 'vData', 'data',...
 
 
 function opts = configurePaths(opts)
+% Get the parts
+if ismember('/', opts.filePath)
+    fileparts = strsplit(opts.filePath, '/');
+    opts.datestring = fileparts{end-1};
+else
+    fileparts = strsplit(opts.filePath, '\');
+    opts.datestring = fileparts{end-1};
+end
+
+if isnan(opts.animal)
+    opts.animal = lower(fileparts{end});
+end
+
 % Append computer-dependent root to file paths
 compname = getenv('computername');
 switch compname
@@ -118,13 +133,16 @@ if isnan(opts.saveFolder)
 end
 
 masterPath = 'templates';
-switch opts.animal
+switch lower(opts.animal)
     case 'e53'
         fileRefImgPath = 'e53Template/e53surface.tif';
         fileRefAtlasPath = 'e53Template/atlas_E53.mat';
     case 'e54'
         fileRefImgPath = 'e54Template/e54surface.tif';
         fileRefAtlasPath = 'e54Template/atlas_E54.mat';
+    case 'e57'
+        fileRefImgPath = 'e57Template/e57surface.tif';
+        fileRefAtlasPath = 'e57Template/atlas_E57.mat';
     case 'f01'
         fileRefImgPath = 'f01Template/f01surface.tif';
         fileRefAtlasPath = 'f01Template/atlas_F01.mat';
@@ -146,13 +164,6 @@ end
 opts.refImgPath = fullfile(masterPath, fileRefImgPath);
 opts.refAtlasPath = fullfile(masterPath, fileRefAtlasPath);
 
-% Get the parts
-if ismember('/', opts.filePath)
-    fileparts = strsplit(opts.filePath, '/');
-    opts.datestring = fileparts{end-1};
-else
-    fileparts = strsplit(opts.filePath, '\');
-    opts.datestring = fileparts{end-1};
-end
+
 
 end
