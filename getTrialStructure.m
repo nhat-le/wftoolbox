@@ -7,11 +7,13 @@ bfile = dir(fullfile(opts.trialDataPath, '*Block.mat'));
 load(fullfile(bfile(1).folder, bfile(1).name), 'block');
 
 %TODO: Fix the channel id for the sync signal (changed!)
-syncsignal = Timeline.rawDAQData(:,5);
+syncChannel = strcmp({Timeline.hw.inputs.daqChannelID}, 'ai2');
+frameChannel = strcmp({Timeline.hw.inputs.daqChannelID}, 'ctr2');
+syncsignal = Timeline.rawDAQData(:,syncChannel);
 dsync = diff(syncsignal);
 feedbackTimesFromTimeline = Timeline.rawDAQTimestamps(dsync > 2);
 frametimesIdx = find(diff(Timeline.rawDAQData(:,2)));
-feedbackFrameIdxFromTimeline = Timeline.rawDAQData(dsync > 2, 2);
+feedbackFrameIdxFromTimeline = Timeline.rawDAQData(dsync > 2, frameChannel);
 
 timg = Timeline.rawDAQTimestamps(frametimesIdx(1:end));
 timingInfo.timg = timg;
