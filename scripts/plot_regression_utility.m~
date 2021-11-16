@@ -1,0 +1,39 @@
+%% Load the data
+filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/regression_coefs';
+
+files = 
+id = 
+filename = 'allData_extracted_f01_043021pix-regression.mat';
+load(fullfile(filedir, filename));
+
+
+%% visualize the coefficients
+figure(1);
+for i = 1:6
+    subplot(2,3,i)
+    imagesc(squeeze(his_coef_arr(:,:,i)))
+    caxis([-0.02, 0.02])
+    colormap(redblue)
+end
+
+
+figure(2);
+for i = 1:6
+    subplot(2,3,i)
+    imagesc(squeeze(his_coef_arr(:,:,i+6)))
+    caxis([-0.02, 0.02])
+    colormap(redblue)
+end
+
+figure(3);
+for i = 1:6
+    subplot(2,3,i)
+    imagesc(squeeze(his_coef_arr(:,:,i+12)))
+    caxis([-0.02, 0.02])
+    colormap(redblue)
+end
+
+figure(4)
+imagesc(squeeze(his_coef_arr(:,:,end)))
+caxis([-0.02, 0.02])
+colormap(redblue)
