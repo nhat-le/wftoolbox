@@ -11,3 +11,14 @@ A toolbox for widefield imaging analysis
 - Download the locaNMF-prepocess toolbox from https://github.com/ss5513/locaNMF-preprocess
 - Add the locaNMF/utils folder to the MATLAB path
 - Open wftoolbox/makeBrainTemplate and follow the instructions
+- Go to align_recording_to_allen.mat, change line 21 to load('allenDorsalMap.mat')
+
+### Instructions for batch processing:
+- Create an excel spreadsheet .xlsx with 5 columns: 
+(1) filepath: path to the .tif files containing the imaging data
+(2) trialdatapath: path to the rigbox behavioral data
+(3) dtstart: start of time window for extraction (in secs)
+(4) dtend: end of time window for extraction (in secs) - usually for ITI of 1s this should be [-1 1]
+(5) animal: animal name
+- Modify path and run `compile_allData.m`: this will extract the data and save in allData_extracted*.m
+- Modify path and run `save_allData.m`: this will align the template and save in template_extracted*.m
