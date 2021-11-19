@@ -1,0 +1,53 @@
+function [b, CI, zs] = get_regression_coef_zsplit(data, xCenter, yCenter, ...
+    roisize, Xmat, window, zstates, blockstarts)
+% for computing the regression coefficients given the design matrix Xmat
+% and the observations y
+% Xmat and y will be split according to the states specified in zstates
+% b and CI are cell arrays containing the coefficient estimates for each
+% of the splits
+zs = unique(zstates);
+zstates = zstates(1:
+
+traces = utils.get_single_trace(data, xCenter, yCenter, roisize);
+
+
+b = [];
+CI = {};
+
+% Split the y and Xmat
+trial_partitions = {};
+Xmat_partitions = {};
+for i = 1:numel(zs)
+    z = zs(i);
+    zblocks = find(zstates == z);
+    trials = [];
+    for j = 1:numel(zblocks)
+        blockidx = zblocks(j);
+        start_id = blockstarts(blockidx);
+        if blockidx == numel(blockstarts)
+            end_id = numel(traces);
+        else
+            end_id = blockstarts(blockidx + 1) - 1;
+        end
+        trials = [trials (start_id : end_id)];
+    end
+    
+    trials(trials <= window) = [];
+%     disp(trials);
+    trace_singlez = traces(trials);
+    X_singlez = Xmat(trials - window,:);
+    trial_partitions{i} = trace_singlez;
+    Xmat_partitions{i} = X_singlez;
+    
+    
+    % Fit the model for the partition
+    mdl = fitlm(X_singlez, trace_singlez, 'Intercept', false);
+    b(:,i) = mdl.Coefficients.Estimate;
+    CI{i} = mdl.coefCI;
+end
+
+
+
+
+
+end

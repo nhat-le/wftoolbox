@@ -1,0 +1,31 @@
+% Load the data
+filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/regression-split';
+files = dir(fullfile(filedir, '*regression.mat'));
+
+id = 2;
+
+process_and_save(id, files);
+
+function process_and_save(id)
+load(fullfile(files(id).folder, files(id).name));
+disp(files(id).name);
+
+savedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/regression-split/plots';
+
+%%
+for i = 1:numel(zs1)
+    figure(i);
+    for j = 1:6
+        subplot(2,3,j)
+        imagesc(his_coef_arr(:,:,j,i))
+        caxis([-0.02 0.02])
+        colormap(redblue)
+    end
+    
+    % Save image
+    saveas(gcf, fullfile(savedir, sprintf('%s_cluster%d.png', files(id).name(1:end-4), zs1(i))));
+end
+end
+
+
+

@@ -160,6 +160,7 @@ for i = 1:numel(xgrid)
         [b, CI, zs] = utils.get_regression_coef_zsplit(data, xc, yc, ...
             roisize, Xmat, window, zstates, blockstarts);
         coef_arr(i,j,:,:) = b;
+%         fprintf('i=%d, j=%d, xc=%d, yc=%d, coef=%.4f\n', i, j, xc, yc, coef)
     end
 end
 
@@ -168,19 +169,16 @@ close(f);
 %% visualize with zstates
 for i = 1:4
     figure(i);
-    for j = 1:6
-        subplot(2,3,j)
-        imagesc(coef_arr(:,:,j,i))
-        caxis([-0.02, 0.02])
-        colormap(redblue)
+    for j = 1:4
+        subplot(2,2,j)
+        imagesc(coef_arr,
+        
     end
+    
+    
+    
 end
 
-
-%%
-savefilename = 'test.mat';
-save(savefilename, 'his_coef_arr', 'his_coef_CI', 'qcoef_CI', 'qcoef_arr',...
-    'opts', 'mdl');
 
 %% visualize the coefficients
 figure(1);
