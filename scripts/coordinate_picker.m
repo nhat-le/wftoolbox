@@ -34,7 +34,7 @@ h5filenames = {
             'allData_extracted_f03_030121pix.h5',...
             'allData_extracted_f04_030221pix.h5'};
 
-id = 7;
+id = 1;
 filename = h5filenames{id};
 
 if strcmp(filename(end-4:end), '.mat')
@@ -42,16 +42,18 @@ if strcmp(filename(end-4:end), '.mat')
     load(fullfile(filedir, filename), 'allData');
     data = allData.data;
 else
-    filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/hdf5';
+    filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw/hdf5';
     data = h5read(fullfile(filedir, filename), '/allData/data');
 end
 
+% Manual selection of N points for averaging traces
+N = 12;
 figure(1);
 ax = axes;
 imagesc(ax, mean(data, [3,4]))
 colormap(redblue);
 hold on
-[x,y] = custom_ginput(12, ax);
+[x,y] = custom_ginput(N, ax);
 
 traces = [];
 roisize = 9;

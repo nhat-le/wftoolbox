@@ -1,3 +1,5 @@
+% Script for loading 
+
 goodrawfiles = {'2021-10-01_1_f25', '2021-10-04_1_f25',...
     '2021-10-05_1_f25', '2021-10-06_1_f25'};
 
@@ -46,11 +48,12 @@ batch_names = matfilenames;
 opts.date = '111821';
 
 if strcmp(batch_names{1}(end-3:end), '.mat')
-    opts.filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed';
+    %TODO: generalize this to all animals, this only works for file 17!
+    opts.filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw/extracted/f25';
 else
     opts.filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/hdf5';
 end
-opts.zdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/expdata'; %directory that stores the zstate data
+opts.zdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/processed_data/expdata/111821'; %directory that stores the zstate data
 opts.savedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/regression-split';
 opts.window = 5;
 opts.roisize = 9;
@@ -60,7 +63,7 @@ opts.subset = -1;
 
 %%
 
-for i = 17:numel(batch_names)
+for i = 17 %:numel(batch_names)
     tic
     
         fprintf('------- Processing file %d of %d: %s... ------\n', i, ...
@@ -68,18 +71,12 @@ for i = 17:numel(batch_names)
         opts.filename = batch_names{i};
         parts = strsplit(opts.filename, '_');
         opts.animal = lower(parts{3});
+        
         opts.sessid = parts{4}(1:6);
         
-        
-%         opts.filename = sprintf('allData_extracted_%s_%s%s%spix.mat', parts{3},...
-%             dateparts{2}, dateparts{3}, dateparts{1}(3:4));
+      
         utils.do_wf_regression_zsplit(opts);
-        
-     
-        fprintf('Error loading file %s\n', opts.filename);
-        continue
-        
-    
+           
     toc
 end
 

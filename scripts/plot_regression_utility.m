@@ -1,3 +1,7 @@
+% Utility for visualizing the coefficients of the value regression
+% showing the spatial coefficients across the whole brain, for i = 1, .., 6
+% trials back
+
 %% Load the data
 filedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/regression_coefs';
 

@@ -1,3 +1,6 @@
+% (Deprecated: for reading from mat files and saving to an h5 file for
+% faster subsequent loads, was not successful...)
+
 rootdir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed';
 savedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/hdf5';
 files = dir(fullfile(rootdir, 'allData*.mat'));

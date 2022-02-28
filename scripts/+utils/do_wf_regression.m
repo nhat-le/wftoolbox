@@ -45,6 +45,11 @@ fprintf('done\n');
 % xgrid = 10:3:110;
 % ygrid = 10:3:110;
 
+% Two modes: Xmat: doing a history regression of N trials back (N specified
+% by window), for each, include choice, feedback, choice x feedback
+% XmatQ: fitted a reinforcement learning model to the choice sequences and
+% performs a regression on the Q values.
+
 Xmat = utils.historyXmat(choices, feedback, window);
 [XmatQ, mdl] = utils.qfitXmat(choices, feedback);
 

@@ -10,7 +10,7 @@ savedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed
 load(fullfile(filedir, filename));
 
 % get the zstates and params
-opts.zdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/expdata';
+opts.zdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/processed_data/expdata/111821/';
 opts.animal = animal;
 opts.date = '111821';
 opts.sessid = expdate;
@@ -63,7 +63,7 @@ fileparts = strsplit(filename, '_');
 
 savedir = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/regression-split/plots3';
 
-opts.zdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/expdata';
+opts.zdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/processed_data/expdata/111821';
 opts.animal = fileparts{3};
 opts.date = '111821';
 opts.sessid = fileparts{4}(1:6);

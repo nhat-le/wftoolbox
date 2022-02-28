@@ -1,3 +1,4 @@
+
 % For aggregating the results of the decoding (balanced)set(0,'DefaultFigureWindowStyle','docked')
 
 clear 
@@ -128,7 +129,7 @@ for i =1:4
 %     imagesc(aggregate_decoding{i})
     
 end
-xlim([-1, 5])
+% xlim([-1, 5])
 
 mymakeaxis('x_label', 'Trials', 'y_label', 'Decoding performance', 'xticks', 0:5)
 c = legend(h, {'1', '2', '3', '4'});

@@ -1,5 +1,7 @@
 set(0,'DefaultFigureWindowStyle','docked')
 
+
+
 clear 
 close all;
 files = dir(fullfile('data', '*extracted.mat'));

@@ -5,6 +5,13 @@ function [b, CI, zs, zblock_partitions] = get_regression_coef_zsplit(data, xCent
 % Xmat and y will be split according to the states specified in zstates
 % b and CI are cell arrays containing the coefficient estimates for each
 % of the splits
+% xCenter, yCenter
+% roisize
+% Xmat
+% window
+% zstates: array of the zstates of each block as 
+% blockstarts
+
 zs = unique(zstates);
 
 assert(numel(zstates) <= numel(blockstarts));

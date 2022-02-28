@@ -1,3 +1,5 @@
+% a specific instance of load_utility_zsplit but for a single file of f03
+
 h5filenames = {'allData_extracted_f03_030121pix.h5'};
 
 batch_names = h5filenames;

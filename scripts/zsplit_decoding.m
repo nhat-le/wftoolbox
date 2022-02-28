@@ -1,3 +1,5 @@
+% Perform a decoding analysis of the past choice/reward information
+
 set(0,'DefaultFigureWindowStyle','docked')
 
 clear 
