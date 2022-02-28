@@ -3,31 +3,31 @@ addpath('/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess/utils/');
 
 %% Load the overlaid image
 % For E53
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e53Template/';
+% fdir = 'templates/e53Template/';
 % Y = imread(fullfile(fdir, 'serenoOverlay.png'));
 
 % For E54
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/';
+% fdir = 'templates/e54Template/';
 % Y = imread(fullfile(fdir, 'serenoOverlay.png'));
 
 % For E57
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/';
-% Y = imread(fullfile(fdir, 'serenoOverlay.png'));
+fdir = 'templates/e57Template/';
+Y = imread(fullfile(fdir, 'e57surface.png'));
 
 % For F01
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f01Template/';
+% fdir = 'templates/f01Template/';
 % Y = imread(fullfile(fdir, 'f01surface.png'));
 
 % For F02
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f02Template/';
+% fdir = 'templates/f02Template/';
 % Y = imread(fullfile(fdir, 'f02surface.tif'));
 
 % For F03
-fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f03Template/';
-Y = imread(fullfile(fdir, 'f03surface.tif'));
+% fdir = 'templates/f03Template/';
+% Y = imread(fullfile(fdir, 'f03surface.tif'));
 
 % For F04
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f04Template/';
+% fdir = 'templates/f04Template/';
 % Y = imread(fullfile(fdir, 'f04surface.png'));
 
 %% Get brainmask

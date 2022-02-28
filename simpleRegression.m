@@ -52,24 +52,10 @@ dataWindowMean = squeeze(mean(dataWindow, 3));
 rewRegressor = feedback;
 
 convolveWindow = 10;
-
 valueRegressor = conv(response, ones(1,convolveWindow) / convolveWindow, 'same');
 
-% switch regressor
-switchRegressor = nan(1, numel(response));
-switchWindow = 10; % a window to count the number of switches
-for i = 1:numel(response)
-    lower = max(i - floor(switchWindow/2), 1);
-    upper = min(i + floor(switchWindow/2), numel(response));
-    windowForSwitches = response(lower:upper);
-    windowForSwitches(windowForSwitches == 0) = nan;
-    switchCounts = nansum(~isnan(diff(windowForSwitches)) & ...
-        diff(windowForSwitches) ~= 0);
-    switchRegressor(i) = switchCounts / (upper - lower + 1);
-   
-    
-end
-
+switchWindow = 10;
+switchRegressor = buildSwitchRegressor(response, switchWindow);
 %%
 X = [rewRegressor' valueRegressor' switchRegressor' ones(numel(response), 1)];
 Xsmall = X(delays > 0, :);
@@ -146,10 +132,83 @@ set(gca, 'FontSize', 16)
 
 
 
+%% Make a long behavior to visualize the different regressors
+rng(1234);
+tpoints = 1:50;
+rate = 1 ./ (1 + exp((-tpoints + 20) / 2));
+% plot(rate)
+
+choiceSim = rand(1, numel(tpoints)) < rate;
+choiceSim = choiceSim * 2 - 1;
+
+switchRegressor = buildSwitchRegressor(choiceSim, 6);
+valueRegressor = nan(1, numel(tpoints));
+currVal = 0;
+gamma = 0.1;
+for i = 1:numel(tpoints)
+    valueRegressor(i) = currVal;
+    if choiceSim(i) == -1
+        currVal = currVal + gamma * (1 - currVal); 
+    else
+        currVal = currVal + gamma * (1 - currVal); 
+    end
+end
+
+figure;
+subplot(311)
+window_response = choiceSim;
+window_fb = choiceSim == 1;
+trial_n = 1:numel(window_response);
+plot(trial_n(window_fb == 1), window_response(window_fb == 1)/2 + 1/2, 'bo',...
+    'MarkerFaceColor', 'b')
+hold on
+plot(trial_n(window_fb == 0), window_response(window_fb == 0)/2 + 1/2, 'rx')
+vline(1, 'k--')
+ylabel('Choices')
+set(gca, 'FontSize', 16)
+
+
+
+subplot(312)
+plot(valueRegressor, 'LineWidth', 2)
+vline(1, 'k--')
+set(gca, 'FontSize', 16)
+ylabel('Value')
+
+subplot(313)
+plot(switchRegressor, 'LineWidth', 2)
+vline(1, 'k--')
+set(gca, 'FontSize', 16)
+ylabel('Switch prob')
+xlabel('Trial #')
 
 
 
 
+
+
+
+
+
+function switchRegressor = buildSwitchRegressor(response, switchWindow)
+% switch regressor
+% switchWindow: a window to count the number of switches
+
+switchRegressor = nan(1, numel(response));
+
+for i = 1:numel(response)
+    lower = max(i - floor(switchWindow/2), 1);
+    upper = min(i + floor(switchWindow/2), numel(response));
+    windowForSwitches = response(lower:upper);
+    windowForSwitches(windowForSwitches == 0) = nan;
+    switchCounts = nansum(~isnan(diff(windowForSwitches)) & ...
+        diff(windowForSwitches) ~= 0);
+    switchRegressor(i) = switchCounts / (upper - lower + 1);
+   
+    
+end
+
+end
 
 
 

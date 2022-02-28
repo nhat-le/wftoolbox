@@ -1,14 +1,33 @@
+%% Get the files from the master database
+[~,data,~] = xlsread('e54fileinfo.xlsx');
+
+
+
+for i = 2:size(data, 1)
+    filePath = data{i,1};
+    trialDataPath = data{i,2};
+    fprintf('Extracting file %d of %d: %s\n', i - 1, size(data, 1) - 1,...
+        filePath);
+    dt = [-1 1];
+    parseSingleFile(filePath, trialDataPath, 'e54', dt);
+    
+end
+
+
+
+function parseSingleFile(filePath, trialDataPath, animal, dt)
+
+
 %% Input the settings for the analysis here
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
 %Note: code will add the root for you, only need to specify relative path
-% opts.filePath = 'F:\May2021\051421\F03';
-% opts.trialDataPath = 'C:\LocalExpData\subjects\f03\2021-05-14\1';
-opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/Dec2020/e54-12272020/e54blockworld';
-opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27/1';
+opts.filePath = filePath;
+opts.trialDataPath = trialDataPath;
+
 
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
-opts.animal = 'e54'; % if nan, code will figure out what animal from file path
+opts.animal = animal; % if nan, code will figure out what animal from file path
 opts = configurePaths(opts);
 
 opts.alignBorders = 1; % if borders should be aligned using Allen atlas template, usually 1
@@ -21,7 +40,7 @@ opts.quickSave = 0; % if 1, skip visualization, save the processed data
 opts.resizeFactor = 2;
 
 %!!IMPORTANT: CHANGE THIS FOR EACH SESSION TO BE ANALYZED!!
-opts.dt = [-1 1]; %what window (secs) to take around the alignment point
+opts.dt = dt; %what window (secs) to take around the alignment point
 
 % two dt's for delays
 opts.alignedBy = 'reward'; %'reward' or 'response': which epoch to align to
@@ -41,48 +60,6 @@ opts.stem = opts.datafiles(1).name(1:end-4);
 allData = getAlignedTrials(opts, trialInfo, timingInfo);
 
 
-%% Get the aggregate area information
-% Alignment
-if opts.alignBorders
-    template = alignImages(opts, allData);
-end
-
-
-%% Split into left or right trials
-if ~opts.quickSave
-    criterion1.feedback = 0; %1 or 0; filter only rewarded/non-rewarded trials
-    criterion1.response = nan; %-1 or 1; filter only left/right trials
-    criterion1.delay = 'late'; %'early' or 'late'; filter trials with or without delay
-    criterion1.trialSubset = nan;
-
-    criterion2.feedback = 1; %1 or 0; filter only rewarded/non-rewarded trials
-    criterion2.response = nan; %-1 or 1; filter only left/right trials
-    criterion2.delay = 'late'; %'early' or 'late'; filter trials with or without delay
-    criterion2.trialSubset = nan;
-
-
-    [filteredIncorr, avgIncorr] = filterTrials(allData.data, criterion1, trialInfo);
-    [filteredCorr, avgCorr] = filterTrials(allData.data, criterion2, trialInfo);
-end
-%% Browsing the raw data and average stack
-% compareMovie(filteredIncorr); %use this GUI to browse the widefield data stack
-if ~opts.quickSave
-    compareMovie(filteredIncorr);
-end
-
-%% Visualize the areal summary
-if ~opts.quickSave
-    [maxresp, respTimes] = visualizePeakInfo(avgCorr, opts, timingInfo);
-
-    templateOpts.brainSide = 'left'; % 'left' or 'right'
-    templateOpts.sortBy = 'pks'; %'pks' or 'pkTimes'
-    templateOpts.normalize = 0;
-
-    [idx, sortedTimes] = visualizeAreaSummary(allData, avgCorr, templateOpts, template, timingInfo);
-
-    templateOpts.sortBy = idx; % sort by the same order as previous
-    [idx2,sortedTimes2] = visualizeAreaSummary(allData, avgIncorr, templateOpts, template, timingInfo);
-end
 
 %% Save the pix array
 bData = allData.bData;
@@ -91,14 +68,15 @@ data = allData.data;
 feedback = trialInfo.feedback;
 response = trialInfo.responses;
 target = trialInfo.target;
-atlas = template.atlas;
+% atlas = template.atlas;
 fullsaveName = sprintf('regionData_%s_%spix.mat', opts.animal, opts.datestring);
 
+fprintf('Saving extracted data...\n')
 save(fullfile(opts.saveFolder, fullsaveName), 'bData', 'vData', 'data',...
-    'feedback', 'response', 'target', 'atlas', 'trialInfo', 'timingInfo',...
-    'template', 'opts', '-v7.3')
+    'feedback', 'response', 'target', 'trialInfo', 'timingInfo',...
+    'opts', '-v7.3')
 
-
+end
 
 
 function opts = configurePaths(opts)

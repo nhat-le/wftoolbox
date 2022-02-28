@@ -10,6 +10,7 @@ A toolbox for widefield imaging analysis
 ### Instructions for setting up animal templates
 - Download the locaNMF-prepocess toolbox from https://github.com/ss5513/locaNMF-preprocess
 - Add the locaNMF/utils folder to the MATLAB path
+- To set up the animal template, run `/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess`
 - Open wftoolbox/makeBrainTemplate and follow the instructions
 - Go to align_recording_to_allen.mat, change line 21 to load('allenDorsalMap.mat')
 
