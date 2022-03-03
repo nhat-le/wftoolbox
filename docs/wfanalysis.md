@@ -2,6 +2,13 @@
 
 Here are some important files to run the regression and history analysis of the widefield data during dynamic foraging. Basic pipelines of analysis that was submitted for COSYNE 2022.
 
+### 1. Z-states extraction
+* Run the zstate extraction scripts in `MatchingSimulations` folder
+
+* First run `/Users/minhnhatle/Dropbox (MIT)/Sur/MatchingSimulations/PaperFigures/code/blockhmm/compile_behavioral_sessions.m` with `animals` set to the WF imaging animals, and `version` set to `022822_wf`.
+
+* Extracted sessions will be saved to `processed_data\022822_wf` folder.
+
 Script `keypoint_visualize.m`
 
 - Reads from data stored in the folder `data`, file names `*extracted.mat`
