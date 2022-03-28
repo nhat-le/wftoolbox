@@ -23,3 +23,9 @@ A toolbox for widefield imaging analysis
 (5) animal: animal name
 - Modify path and run `compile_allData.m`: this will extract the data and save in allData_extracted*.m
 - Modify path and run `save_allData.m`: this will align the template and save in template_extracted*.m
+
+### Instructions for setting templates for opto alignment:
+- Modify the script `laserGalvoControl/classes/animalList.m` and update with new animal and paths to data etc
+- First capture ref image using the galvoGUI, the images will be saved in the corresponding animal folder.
+- On personal computer, run the script `/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess/process_dataset1p.m` to align the animal template.
+- This creates an animal template folder (for e.g. `wftoolbox/templates/f32Template/f32_atlas.m`). Copy this to the opto galvo computer folder (`Opto galvo/Data (1)/f32`
