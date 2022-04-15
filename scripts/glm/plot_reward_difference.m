@@ -4,10 +4,7 @@
 
 paths = pathsetup('wftoolbox');
 
-% f01, 03.04.21
-% animal = 'e57';
-% expdate = '030221';
-animal = 'e57';
+animal = 'f04';
 expdate = '030221';
 
 % load trialinfo from raw data (containing info about reward/error etc)

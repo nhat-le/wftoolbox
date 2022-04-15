@@ -14,11 +14,9 @@ for i = 1:numel(files)
 end
 
 %%
-root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw/templateData/*';
+root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw/templateData/f04';
 
-tbl = crawl_folder(root);
-
-% writetable(tbl, 'template_sessions.csv');
+crawl_folder(root);
 
 
 function tbl = crawl_folder(folder)
@@ -29,11 +27,7 @@ function tbl = crawl_folder(folder)
 
 files = dir(fullfile(folder, '*.mat'));
 paths = pathsetup('wftoolbox');
-animals = {};
-expdates = {};
-maxdt = [];
-mindt = [];
-meandt = [];
+tbl = 1;
 
 for i = 1:numel(files)
     if contains(folder, 'surface_imgs')
@@ -43,19 +37,8 @@ for i = 1:numel(files)
     else
         parts = strsplit(files(i).name, '_');
         animal = parts{2};
-        expdate = parts{3}(1:end-7);       
+        expdate = parts{3}(1:6);       
     end
-    
-    if numel(expdate) == 6
-        expdate_datetime = datetime(expdate, 'InputFormat', 'MMddyy');
-    elseif numel(expdate) == 8
-        expdate_datetime = datetime(expdate, 'InputFormat', 'MMddyyyy');
-    else
-        error('Unrecognized date format')
-    end
-    
-    expdate = expdate_datetime;
-    expdate.Format = 'MMddyy';
     
     filepath = sprintf('%s/%s/allData_extracted_%s_%spix.mat', paths.rawdatapath,...
         animal, animal, expdate);
@@ -66,22 +49,7 @@ for i = 1:numel(files)
     out = get_trialInfo(expdate, animal);
     fprintf('i = %d, Animal: %s, date: %s, dt = %.2f\n', i, animal, expdate, mean(out.dt));
     
-    animals{end+1} = animal;
-    expdates{end+1} = expdate_datetime;
-    mindt(end+1) = round(min(out.dt), 1);
-    maxdt(end+1) = round(max(out.dt), 1);
-    meandt(end+1) = round(mean(out.dt), 2);
-    
-    
-    
-    
 end
-
-ids = 1:numel(animals);
-tbl = table(ids', animals', expdates', mindt', maxdt', meandt', ...
-    'VariableNames', {'ID', 'Animal', 'Expdate', 'Min dt', 'Max dt',...
-    'Mean dt'});
-
 
 end
 
