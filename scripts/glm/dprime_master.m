@@ -1,5 +1,6 @@
 % For combining all sessions of a given animal
-% and compute the average activation in reward and error conditions
+% and compute the dprime value between reward and error trials
+
 
 
 root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
@@ -14,9 +15,9 @@ areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  
      -164  -157  -150  -143  -136  -129  -121  -114  -107  -100   -92   -78   -71   -64   -57   -50, ...
      -43   -36   -29   -21   -15    -8     8    15    21    29    36    43    50    57    64    71, ...
      78    92   100   107   114   121   129   136   143   150   157   164   171   178   186   198, ...
-     249   255   261   268   275   282   300   301   335   651   653];
+     217 249   255   261   268   275   282   295 300   301   335   651   653];
 
-for id = 15:numel(files)
+for id = 1:numel(files)
     
 
     
@@ -35,13 +36,29 @@ for id = 15:numel(files)
         continue
     end
     
+%     disp(opts.dt)
     assert(opts.dt(2) == 1); %1-second window post-reward to extract
     fs = timingInfo.fs;
+    % note: for f25: need to use window = 0.7s
     nframes = floor(opts.dt(2) * fs / 2);
     
+    % e57: 33, f01: 39, f02: 22, f03:4 
     if id == 33
         brainmap = template.atlas;
         
+    end
+
+    % compute the position in the block
+    currpos = 0;
+    pos_arr = 0;
+    for k = 2:numel(trialInfo.target)
+        if (trialInfo.target(k - 1) == trialInfo.target(k))
+            currpos = currpos + 1;
+            pos_arr(end+1) = currpos;
+        else
+            currpos = 0;
+            pos_arr(end+1) = currpos;
+        end
     end
     
     
@@ -49,10 +66,19 @@ for id = 15:numel(files)
     dt_all = trialInfo.feedbackTimes - trialInfo.responseTimes;
     delaytrials = dt_all > max(dt_all) / 2;
     
+
+    
     % Extract the mean for correct and incorrect
-    agg_corr = template.aggData(:,end-nframes:end,delaytrials & trialInfo.feedback);
-    agg_incorr = template.aggData(:,end-nframes:end,delaytrials & ~trialInfo.feedback);
+    agg_corr = [];
+    for offsetid = 1:3
+        agg_corr = template.aggData(:,end-nframes-10:end, ...
+            delaytrials & trialInfo.feedback & pos_arr == offsetid);
+        agg_incorr = template.aggData(:,end-nframes-10:end,...
+            delaytrials & ~trialInfo.feedback & pos_arr == offsetid);
+    end
     [~,nfr,Ncorr] = size(agg_corr);
+
+
     Nincorr = size(agg_incorr, 3);
     
     
@@ -84,21 +110,14 @@ for id = 15:numel(files)
     end
     
     
-    
-    
-    
-%     agg_corr_master(:,:,end+1:end+Ncorr) = agg_corr;
-%     agg_incorr_master(:,:,end+1:end+Nincorr) = agg_incorr;
-%     
-%     Ncorr_all(end+1) = Ncorr;
-%     Nincorr_all(end+1) = Nincorr;
-    
     fprintf('%d, done: %s, %d\n', id, files(id).name, numel(template.areaid));
     if sum(~ismember(template.areaid, areaid_lst)) > 0
         fprintf('### flag:%s\n', files(id).name);
     end
     
 end
+
+fprintf('ncorr = %d, Nincorr = %d\n', size(agg_corr_master, 3), size(agg_incorr_master, 3));
 
 %% Visualize average activity
 meancorr = nanmean(agg_corr_master, 3);
@@ -115,7 +134,7 @@ std_group = sqrt((std_corr.^2 * (Ncorr - 1) + std_incorr.^2 * (Nincorr - 1)) / .
 meandiff_all = (mean_incorr - meancorr) ./ std_group;
 
 
-rot_angle = 2;
+rot_angle = 34;
 
 % plot
 for tid = 1:size(meancorr, 2)
@@ -126,7 +145,7 @@ for tid = 1:size(meancorr, 2)
         diff_map(brainmap == areaID) = meandiff_all(i, t);
     end
     
-    subplot(4, 5, tid);
+    nexttile
     diff_map = imrotate(diff_map, rot_angle);  
     rot_brainmap = imrotate(brainmap, rot_angle);
     diff_map(rot_brainmap == 0) = 0;
