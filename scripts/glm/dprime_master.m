@@ -6,10 +6,10 @@
 root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
 files = dir(sprintf('%s/templateData/e57/*.mat', root));
 
-agg_corr_master = [];
-agg_incorr_master = [];
-Ncorr_all = [];
-Nincorr_all = [];
+agg_corr_master = {};
+agg_incorr_master = {};
+maxoffset = 25;
+
 
 areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  -217  -198  -186  -178  -171, ...
      -164  -157  -150  -143  -136  -129  -121  -114  -107  -100   -92   -78   -71   -64   -57   -50, ...
@@ -18,9 +18,7 @@ areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  
      217 249   255   261   268   275   282   295 300   301   335   651   653];
 
 for id = 1:numel(files)
-    
 
-    
     parts = strsplit(files(id).name, '_');
     animal = parts{2};
     expdate = parts{end}(1:end-7);
@@ -36,7 +34,6 @@ for id = 1:numel(files)
         continue
     end
     
-%     disp(opts.dt)
     assert(opts.dt(2) == 1); %1-second window post-reward to extract
     fs = timingInfo.fs;
     % note: for f25: need to use window = 0.7s
@@ -65,59 +62,76 @@ for id = 1:numel(files)
     % Only extract trials with delays
     dt_all = trialInfo.feedbackTimes - trialInfo.responseTimes;
     delaytrials = dt_all > max(dt_all) / 2;
+   
     
-
-    
-    % Extract the mean for correct and incorrect
-    agg_corr = [];
-    for offsetid = 1:3
-        agg_corr = template.aggData(:,end-nframes-10:end, ...
+    % Extract the mean for correct and incorrect, for all offsets
+    % for the current session
+    agg_corr = {};
+    for offsetid = 1:maxoffset
+        agg_corr{offsetid} = template.aggData(:,end-nframes-10:end, ...
             delaytrials & trialInfo.feedback & pos_arr == offsetid);
-        agg_incorr = template.aggData(:,end-nframes-10:end,...
+        agg_incorr{offsetid} = template.aggData(:,end-nframes-10:end,...
             delaytrials & ~trialInfo.feedback & pos_arr == offsetid);
     end
-    [~,nfr,Ncorr] = size(agg_corr);
 
 
-    Nincorr = size(agg_incorr, 3);
-    
-    
-    currdim_corr = size(agg_corr_master, 3);
-    currdim_incorr = size(agg_incorr_master, 3);
-    
-    if currdim_corr == 1
-        currdim_corr = 0;
+    % Update the master arrays for all offsets
+    for offsetid = 1:maxoffset
+        [~,nfr,Ncorr] = size(agg_corr{offsetid});
+        Nincorr = size(agg_incorr{offsetid}, 3);
+
+        if numel(agg_corr_master) < offsetid
+            currdim_corr = 0;
+            currdim_incorr = 0;
+            
+            agg_corr_master{offsetid} = [];
+            agg_incorr_master{offsetid} = [];
+
+
+        else
+
+            currdim_corr = size(agg_corr_master{offsetid}, 3);
+            currdim_incorr = size(agg_incorr_master{offsetid}, 3);
+        end
+        
+
+        agg_corr_master{offsetid}(1:numel(areaid_lst),1:nfr,end+1:end+Ncorr) = nan;
+        agg_incorr_master{offsetid}(1:numel(areaid_lst),1:nfr,end+1:end+Nincorr) = nan;
+        
+        
+        % place into the master array
+        for j = 1:numel(template.areaid)
+            areaid = find(areaid_lst == template.areaid(j));
+            agg_corr_master{offsetid}(areaid, :,currdim_corr + 1 : currdim_corr + Ncorr) = ...
+                agg_corr{offsetid}(j,:,:);
+            agg_incorr_master{offsetid}(areaid, :,currdim_incorr + 1 : currdim_incorr + Nincorr) = ...
+                agg_incorr{offsetid}(j,:,:);
+        end
+
     end
-    
-    if currdim_incorr == 1
-        currdim_incorr = 0;
-    end
-       
-    
-    agg_corr_master(1:numel(areaid_lst),1:nfr,end+1:end+Ncorr) = nan;
-    agg_incorr_master(1:numel(areaid_lst),1:nfr,end+1:end+Nincorr) = nan;
-    
-    Ncorr_all(end+1) = Ncorr;
-    Nincorr_all(end+1) = Nincorr;
-    
-    % place into the master array
-    for j = 1:numel(template.areaid)
-        areaid = find(areaid_lst == template.areaid(j));
-        agg_corr_master(areaid, :,currdim_corr + 1 : currdim_corr + Ncorr) = ...
-            agg_corr(j,:,:);
-        agg_incorr_master(areaid, :,currdim_incorr + 1 : currdim_incorr + Nincorr) = ...
-            agg_incorr(j,:,:);
-    end
-    
-    
+
+
     fprintf('%d, done: %s, %d\n', id, files(id).name, numel(template.areaid));
     if sum(~ismember(template.areaid, areaid_lst)) > 0
         fprintf('### flag:%s\n', files(id).name);
     end
+   
+        
+    
     
 end
 
-fprintf('ncorr = %d, Nincorr = %d\n', size(agg_corr_master, 3), size(agg_incorr_master, 3));
+%%
+
+lencorrs = cellfun(@(x) size(x, 3), agg_corr_master);
+lenincorrs = cellfun(@(x) size(x, 3), agg_incorr_master);
+
+plot(lencorrs)
+hold on
+plot(lenincorrs)
+
+
+% fprintf('ncorr = %d, Nincorr = %d\n', size(agg_corr_master, 3), size(agg_incorr_master, 3));
 
 %% Visualize average activity
 meancorr = nanmean(agg_corr_master, 3);
@@ -159,7 +173,66 @@ end
 
 
 
+%%
+corr_all = [];
+incorr_all = [];
+for i = 1:6
+    corr_all = cat(3, corr_all, agg_corr_master{i});
+    incorr_all = cat(3, incorr_all, agg_incorr_master{i});
+end
 
+%%
+for i = 1
+    visualize_dprime(corr_all, incorr_all, brainmap, areaid_lst)
+end
+
+
+
+function visualize_dprime(corr_arr, incorr_arr, brainmap, areaid_lst)
+%corr_arr: array of correct responses, size nareas x T x ntrials
+%incorr_arr: array of incorrect responses, size nareas x T x ntrials
+% plots the dprime of each region over the course of the trial
+% brainmap: xpix x ypix array containing the region annotation
+% (incorrect - correct) responses
+
+meancorr = nanmean(corr_arr, 3);
+mean_incorr = nanmean(incorr_arr, 3);
+
+figure;
+Ncorr = size(corr_arr, 3);
+std_corr = nanstd(corr_arr, [], 3);
+Nincorr = size(incorr_arr, 3);
+std_incorr = nanstd(incorr_arr, [], 3);
+
+std_group = sqrt((std_corr.^2 * (Ncorr - 1) + std_incorr.^2 * (Nincorr - 1)) / ...
+        (Ncorr + Nincorr - 2));
+meandiff_all = (mean_incorr - meancorr) ./ std_group;
+
+
+rot_angle = 34;
+
+% plot
+for tid = 1:size(meancorr, 2)
+    t = tid;
+    diff_map = brainmap * 0;
+    for i = 1:numel(areaid_lst)       
+        areaID = areaid_lst(i);
+        diff_map(brainmap == areaID) = meandiff_all(i, t);
+    end
+    
+    nexttile
+    diff_map = imrotate(diff_map, rot_angle);  
+    rot_brainmap = imrotate(brainmap, rot_angle);
+    diff_map(rot_brainmap == 0) = 0;
+    
+    imagesc(diff_map);
+    colormap redblue
+    caxis([-0.5 0.5])
+    axis off
+
+end
+
+end
 
 
 
