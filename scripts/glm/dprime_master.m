@@ -8,7 +8,7 @@ files = dir(sprintf('%s/templateData/e57/*.mat', root));
 
 agg_corr_master = {};
 agg_incorr_master = {};
-maxoffset = 25;
+maxoffset = 90;
 
 
 areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  -217  -198  -186  -178  -171, ...
@@ -133,7 +133,8 @@ plot(lenincorrs)
 
 % fprintf('ncorr = %d, Nincorr = %d\n', size(agg_corr_master, 3), size(agg_incorr_master, 3));
 
-%% Visualize average activity
+%% Visualize average activity - note deprecated, 
+% execute next cell instead
 meancorr = nanmean(agg_corr_master, 3);
 mean_incorr = nanmean(agg_incorr_master, 3);
 
@@ -176,14 +177,14 @@ end
 %%
 corr_all = [];
 incorr_all = [];
-for i = 1:6
+for i = 50:90
     corr_all = cat(3, corr_all, agg_corr_master{i});
     incorr_all = cat(3, incorr_all, agg_incorr_master{i});
 end
 
 %%
-for i = 1
-    visualize_dprime(corr_all, incorr_all, brainmap, areaid_lst)
+for i = 1:3
+    visualize_dprime(agg_corr_master{i}, agg_incorr_master{i}, brainmap, areaid_lst)
 end
 
 
@@ -210,6 +211,7 @@ meandiff_all = (mean_incorr - meancorr) ./ std_group;
 
 
 rot_angle = 34;
+cmap = getPyPlot_cMap(Reds, 256);
 
 % plot
 for tid = 1:size(meancorr, 2)
