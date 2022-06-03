@@ -24,12 +24,68 @@ areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  
 % dates_to_extract = {'030921', '031021', '031221', '031621', '031721', '031921'};
 
 % e57, 2s delays
-dates_to_extract = {'032221', '032321', '032521', '032621', '032921', '033021'};
+% dates_to_extract = {'032221', '032321', '032521', '032621', '032921', '033021'};
+
+%%
+animal = 'e57';
+delayT = 1;
+dates_to_extract = get_session_dates('e57', delayT, 'half');
+areaname = 'MOp1_R';
+opts.removeoutliers = 1;
+opts.normalize_mode = 'meanstd';
+[regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = ...
+    get_aligned_responses(animal, dates_to_extract, areaname, opts);
 
 
-%id for e57
+%% responses aligned to choice
+nFramesPre = floor(37 / 2);
+tstamps = ((1:size(regionsCorr_arr, 1)) - nFramesPre) / (37 / 2);
+figure('Position', [440,440,870,358])
+subplot(131)
+imagesc(regionsCorr_arr', 'XData', tstamps)
+l = hline(cumsum(Ntrials_corr), 'w--');
+set(l, 'LineWidth', 2)
+vline([0 delayT], 'w--')
+caxis([-2, 2])
+
+subplot(132)
+imagesc(regionsIncorr_arr', 'XData', tstamps)
+l = hline(cumsum(Ntrials_incorr), 'w--');
+set(l, 'LineWidth', 2)
+vline([0 delayT], 'w--')
+caxis([-2, 2])
+
+
+subplot(133)
+mean_correct = mean(regionsCorr_arr, 2);
+mean_incorrect = mean(regionsIncorr_arr, 2);
+plot(tstamps, mean_correct)
+hold on
+plot(tstamps, mean_incorrect);
+
+% filename = 'data/e57/e57data_2s-delay.mat';
+% if ~exist(filename)
+%     save(filename, 'tstamps', 'mean_incorrect', 'mean_correct')
+% else
+%     fprintf('File exists, skipping save...\n');
+% end
+% caxis([-0.08, 0.08])
+
+
+
+
+
+function [regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = ...
+    get_aligned_responses(animal, dates_to_extract, areaname, opts)
+% Get correct and incorrect responses given animal and a set of dates
+% animal: string, animal name
+% dates_to_extract: cell of strings, dates of sessions of interest
+% areaname: string, name of area of interest
+% opts: options, include: removeoutliers, normalize_mode
+root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
+files = dir(sprintf('%s/templateData/%s/*.mat', root, animal));
+
 idlst = find(contains({files.name}, dates_to_extract)); %[17 20 21 28];
-% Nframes = [37 47 56 74];
 Nframes = [];
 Ntrials_corr = [];
 Ntrials_incorr = [];
@@ -38,10 +94,10 @@ regionsCorr_all = {};
 regionsIncorr_all = {};
 
 % areaname = 'VISp1_R';
-areaname = 'SSp_bfd1_R';
+% areaname = 'SSp_bfd1_R';
 
-removeoutliers = 1;
-normalize_mode = 'meanstd';
+removeoutliers = opts.removeoutliers;
+normalize_mode = opts.normalize_mode;
 
 
 
@@ -63,7 +119,7 @@ for i = 1:numel(idlst) %id of file to investigate
 
     % Load the trial information, split into correct and incorrect
     try
-        [trialInfo, opts, timingInfo] = helper.load_trial_info(animal, expdate);
+        [trialInfo, opts, ~] = helper.load_trial_info(animal, expdate);
     catch
         fprintf('%s: file does not exist\n', files(id).name)
     end
@@ -99,145 +155,15 @@ for i = 1:numel(idlst) %id of file to investigate
 
 end
 
-[regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = combine_matrices(regionsCorr_all, regionsIncorr_all, 'meanstd');
-
-%% responses aligned to choice
-delayT = -opts.dt(1) - 1;
-nFramesPre = floor(37 / 2);
-tstamps = ((1:size(regionsCorr_arr, 1)) - nFramesPre) / (37 / 2);
-figure('Position', [440,440,870,358])
-subplot(131)
-imagesc(regionsCorr_arr', 'XData', tstamps)
-l = hline(cumsum(Ntrials_corr), 'w--');
-set(l, 'LineWidth', 2)
-vline([0 delayT], 'w--')
-caxis([-2, 2])
-
-subplot(132)
-imagesc(regionsIncorr_arr', 'XData', tstamps)
-l = hline(cumsum(Ntrials_incorr), 'w--');
-set(l, 'LineWidth', 2)
-vline([0 delayT], 'w--')
-caxis([-2, 2])
-
-
-subplot(133)
-mean_correct = mean(regionsCorr_arr, 2);
-mean_incorrect = mean(regionsIncorr_arr, 2);
-plot(tstamps, mean_correct)
-hold on
-plot(tstamps, mean_incorrect);
-
-% filename = 'data/e57/e57data_2s-delay.mat';
-% if ~exist(filename)
-%     save(filename, 'tstamps', 'mean_incorrect', 'mean_correct')
-% else
-%     fprintf('File exists, skipping save...\n');
-% end
-% caxis([-0.08, 0.08])
-
-%% plot the mean responses
-figure('Position', [440,24,439,774]);
-hold on
-Ndates = numel(dates_to_extract);
-plottype = 'line';
-
-if strcmp(plottype, 'line')
-    tiledlayout(Ndates, 1)
-else
-    tiledlayout(Ndates, 2)
-end
-
-
-for i =1:numel(regionsCorr_all)
-    nexttile
-
-    % Correct
-    if strcmp(plottype, 'line')
-        hold on
-        meantrace = mean(corr_norm_all{i}, 2);
-        plot(meantrace)
-        ylim([-0.5 0.5])
-    elseif strcmp(plottype, 'heatmap')
-        imagesc(corr_norm_all{i}')
-        caxis([-2, 2])
-    end
-    title(dates_to_extract{i})
-
-    if strcmp(plottype, 'heatmap')
-        nexttile
-    end
-    % Incorrect
-    if strcmp(plottype, 'line')
-        meantrace = mean(incorr_norm_all{i}, 2);
-        plot(meantrace)
-        ylim([-0.5 0.5])
-    elseif strcmp(plottype, 'heatmap')
-        imagesc(incorr_norm_all{i}')
-        caxis([-2, 2])
-    end
-    title(dates_to_extract{i})
+[regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = combine_matrices(regionsCorr_all, ...
+    regionsIncorr_all, normalize_mode);
 
 end
 
-%%
-figure;
-hold on
-for i =1:numel(regionsIncorr_all)
-    meantrace = mean(regionsIncorr_all{i}, 2);
-
-    % normalize to be in the same range
-    trough = min(meantrace(1:20));
-    peak = nanmax(meantrace(10:37));
-    plot((meantrace - trough) / (peak - trough))
-end
-
-    
-%%
-try
-    [trialInfo, opts, timingInfo] = helper.load_trial_info(animal, expdate);
-catch
-    fprintf('%s: file does not exist\n', files(id).name)
-end
-
-%%
-dt = opts.dt;
-delayPeriod = -dt(1) - 1; %secs
-
-nFramesPre = floor(37 / 2);
-nFramesDelay = floor(37 * delayPeriod / 2);
-
-
-areaname = 'VISp1_R';
-areaid = template.areanames.(areaname);
-idx = find(template.areaid == areaid);
-assert(numel(idx) == 1);
-
-region_act = squeeze(template.aggData(idx, :, :)); %size T x Ntrials
-
-regionCorr = region_act(:, trialInfo.feedback == 1 & trialInfo.rewardDelays > 0);
-regionIncorr = region_act(:, trialInfo.feedback == 0 & trialInfo.rewardDelays > 0);
-
-tframes = (1:size(regionCorr, 1))
-
-
-figure()
-subplot(121)
-imagesc(regionCorr')
-hold on
-caxis([-0.05, 0.05])
-
-subplot(122)
-imagesc(regionIncorr')
-caxis([-0.05, 0.05])
 
 
 
-%%
-figure;
-plot(mean(regionCorr'))
-hold on
-plot(mean(regionIncorr'))
+
 
 
 
