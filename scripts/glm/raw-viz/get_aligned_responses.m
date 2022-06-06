@@ -1,22 +1,17 @@
-% paper figure 2 section 2: visualizing the raw traces averaged by region.
-addpath('/Users/minhnhatle/Documents/ExternalCode/wftoolbox/scripts/glm')
+
+
+
+function [regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = ...
+    get_aligned_responses(animal, dates_to_extract, areaname, opts)
+% Get correct and incorrect responses given animal and a set of dates
+% animal: string, animal name
+% dates_to_extract: cell of strings, dates of sessions of interest
+% areaname: string, name of area of interest
+% opts: options, include: removeoutliers, normalize_mode
 root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
-files = dir(sprintf('%s/templateData/f02/*.mat', root));
+files = dir(sprintf('%s/templateData/%s/*.mat', root, animal));
 
-areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  -217  -198  -186  -178  -171, ...
-     -164  -157  -150  -143  -136  -129  -121  -114  -107  -100   -92   -78   -71   -64   -57   -50, ...
-     -43   -36   -29   -21   -15    -8     8    15    21    29    36    43    50    57    64    71, ...
-     78    92   100   107   114   121   129   136   143   150   157   164   171   178   186   198, ...
-     217 249   255   261   268   275   282   295 300   301   335   651   653];
-
-% f023, no delays
-dates_to_extract = {'022621', '02'};
-
-
-
-%id for e57
 idlst = find(contains({files.name}, dates_to_extract)); %[17 20 21 28];
-% Nframes = [37 47 56 74];
 Nframes = [];
 Ntrials_corr = [];
 Ntrials_incorr = [];
@@ -24,14 +19,15 @@ Ntrials_incorr = [];
 regionsCorr_all = {};
 regionsIncorr_all = {};
 
-areaname = 'VISp1_R';
+% areaname = 'VISp1_R';
+% areaname = 'SSp_bfd1_R';
 
-removeoutliers = 1;
-normalize_mode = 'meanstd';
+removeoutliers = opts.removeoutliers;
+normalize_mode = opts.normalize_mode;
 
 
 
-for i = 1 :numel(idlst) %id of file to investigate
+for i = 1:numel(idlst) %id of file to investigate
     id = idlst(i);
     parts = strsplit(files(id).name, '_');
     animal = parts{2};
@@ -48,12 +44,9 @@ for i = 1 :numel(idlst) %id of file to investigate
     [Nareas, T, Ntrials] = size(template.aggData);
 
     % Load the trial information, split into correct and incorrect
-    try
-        [trialInfo, opts, timingInfo] = helper.load_trial_info(animal, expdate);
-    catch
-        fprintf('%s: file does not exist\n', files(id).name)
-        error('File does not exist')
-    end
+    [trialInfo, opts, ~] = helper.load_trial_info(animal, expdate);
+
+    
 
 
     if opts.dt(1) == -1 % delay = 0s, just split into corr / incorr
@@ -65,9 +58,14 @@ for i = 1 :numel(idlst) %id of file to investigate
     end
 
     % Extract the area of interest
-    areaid = template.areanames.(areaname);
-    area_idx = find(template.areaid == areaid);
-    assert(numel(area_idx) == 1);
+    % old code
+%     areaid = template.areanames.(areaname);
+%     area_idx = find(template.areaid == areaid);
+%     assert(numel(area_idx) == 1);
+
+    % new code using areaStrings
+    area_idx = find(strcmp(template.areaStrings, areaname));
+    assert(numel(area_idx) == 1)
 
     areaCorr = squeeze(regionCorr(area_idx, :, :));
     areaIncorr = squeeze(regionIncorr(area_idx, :, :));
@@ -86,148 +84,14 @@ for i = 1 :numel(idlst) %id of file to investigate
 
 end
 
-[regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = combine_matrices(regionsCorr_all, regionsIncorr_all, 'meanstd');
-
-%% responses aligned to choice
-delayT = -opts.dt(1) - 1;
-nFramesPre = floor(37 / 2);
-tstamps = ((1:size(regionsCorr_arr, 1)) - nFramesPre) / (37 / 2);
-figure('Position', [440,440,870,358])
-subplot(131)
-imagesc(regionsCorr_arr', 'XData', tstamps)
-l = hline(cumsum(Ntrials_corr), 'w--');
-set(l, 'LineWidth', 2)
-vline([0 delayT], 'w--')
-caxis([-2, 2])
-
-subplot(132)
-imagesc(regionsIncorr_arr', 'XData', tstamps)
-l = hline(cumsum(Ntrials_incorr), 'w--');
-set(l, 'LineWidth', 2)
-vline([0 delayT], 'w--')
-caxis([-2, 2])
-
-
-subplot(133)
-mean_correct = mean(regionsCorr_arr, 2);
-mean_incorrect = mean(regionsIncorr_arr, 2);
-plot(tstamps, mean_correct)
-hold on
-plot(tstamps, mean_incorrect);
-
-
-%%
-filename = '../data/f02/f02data_2s_100percent_delay.mat';
-if ~exist(filename)
-    save(filename, 'tstamps', 'mean_incorrect', 'mean_correct')
-    fprintf('File saved\n')
-else
-    fprintf('File exists, skipping save...\n');
-end
-% caxis([-0.08, 0.08])
-
-%% plot the mean responses
-figure('Position', [440,24,439,774]);
-hold on
-Ndates = numel(dates_to_extract);
-plottype = 'line';
-
-if strcmp(plottype, 'line')
-    tiledlayout(Ndates, 1)
-else
-    tiledlayout(Ndates, 2)
-end
-
-
-for i =1:numel(regionsCorr_all)
-    nexttile
-
-    % Correct
-    if strcmp(plottype, 'line')
-        hold on
-        meantrace = mean(corr_norm_all{i}, 2);
-        plot(meantrace)
-        ylim([-0.5 0.5])
-    elseif strcmp(plottype, 'heatmap')
-        imagesc(corr_norm_all{i}')
-        caxis([-2, 2])
-    end
-    title(dates_to_extract{i})
-
-    if strcmp(plottype, 'heatmap')
-        nexttile
-    end
-    % Incorrect
-    if strcmp(plottype, 'line')
-        meantrace = mean(incorr_norm_all{i}, 2);
-        plot(meantrace)
-        ylim([-0.5 0.5])
-    elseif strcmp(plottype, 'heatmap')
-        imagesc(incorr_norm_all{i}')
-        caxis([-2, 2])
-    end
-    title(dates_to_extract{i})
+[regionsCorr_arr, regionsIncorr_arr, corr_norm_all, incorr_norm_all] = combine_matrices(regionsCorr_all, ...
+    regionsIncorr_all, normalize_mode);
 
 end
 
-%%
-figure;
-hold on
-for i =1:numel(regionsIncorr_all)
-    meantrace = mean(regionsIncorr_all{i}, 2);
-
-    % normalize to be in the same range
-    trough = min(meantrace(1:20));
-    peak = nanmax(meantrace(10:37));
-    plot((meantrace - trough) / (peak - trough))
-end
-
-    
-%%
-try
-    [trialInfo, opts, timingInfo] = helper.load_trial_info(animal, expdate);
-catch
-    fprintf('%s: file does not exist\n', files(id).name)
-end
-
-%%
-dt = opts.dt;
-delayPeriod = -dt(1) - 1; %secs
-
-nFramesPre = floor(37 / 2);
-nFramesDelay = floor(37 * delayPeriod / 2);
-
-
-areaname = 'VISp1_R';
-areaid = template.areanames.(areaname);
-idx = find(template.areaid == areaid);
-assert(numel(idx) == 1);
-
-region_act = squeeze(template.aggData(idx, :, :)); %size T x Ntrials
-
-regionCorr = region_act(:, trialInfo.feedback == 1 & trialInfo.rewardDelays > 0);
-regionIncorr = region_act(:, trialInfo.feedback == 0 & trialInfo.rewardDelays > 0);
-
-tframes = (1:size(regionCorr, 1))
-
-
-figure()
-subplot(121)
-imagesc(regionCorr')
-hold on
-caxis([-0.05, 0.05])
-
-subplot(122)
-imagesc(regionIncorr')
-caxis([-0.05, 0.05])
 
 
 
-%%
-figure;
-plot(mean(regionCorr'))
-hold on
-plot(mean(regionIncorr'))
 
 
 
@@ -316,14 +180,6 @@ end
 
 
 end
-
-
-
-
-
-
-
-
 
 
 
