@@ -1,0 +1,97 @@
+clear;
+% paper figure 2 section 2: visualizing the raw traces averaged by region.
+% for visualizing the responses across regions, pooled across
+% multiple sessions with the same delay conditions
+addpath('/Users/minhnhatle/Documents/ExternalCode/wftoolbox/scripts/glm')
+
+root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
+files = dir(sprintf('%s/templateData/e57/*.mat', root));
+
+areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  -217  -198  -186  -178  -171, ...
+     -164  -157  -150  -143  -136  -129  -121  -114  -107  -100   -92   -78   -71   -64   -57   -50, ...
+     -43   -36   -29   -21   -15    -8     8    15    21    29    36    43    50    57    64    71, ...
+     78    92   100   107   114   121   129   136   143   150   157   164   171   178   186   198, ...
+     217 249   255   261   268   275   282   295 300   301   335   651   653];
+
+animal = 'f01';
+delayT = 1;
+cond = 'half';
+dates_to_extract = get_session_dates(animal, delayT, cond);
+opts.removeoutliers = 0;
+dates_to_extract = {'030921'};
+
+opts.normalize_mode = 'meanstd';
+
+% Get the common regions between the indicated sessions
+regions = get_shared_regions(animal, dates_to_extract);
+
+% 69 is R-VISp1
+dprime_all = [];
+for i = 19 %progress(1:numel(regions))
+%     fprintf('Processing region %d of %d: %s\n', i, numel(regions), regions{i});
+    areaname = regions{i};
+    
+     [dprime, template] = get_dprime_combined(animal, dates_to_extract, areaname, opts);
+     dprime_all(i,:) = dprime;
+end
+
+%% For visualization
+% tstamps = linspace(-1, delayT + 1, size(dprime_all, 2));
+tstamps = ((1 : size(dprime_all, 2)) - (delayT + 1) * 37/2) / (37/2);
+
+figure('Position', [714,40,482,765]);
+imagesc(dprime_all, 'XData', tstamps);
+yticks(1:numel(regions))
+yticklabels(regions);
+caxis([-1 1])
+colormap redblue
+colorbar
+set(gca, 'FontSize', 12)
+
+%%
+filename = sprintf('figs/%s_dprime_all_%.2fsdelay_%s.pdf', animal, delayT, cond);
+if ~exist(filename, 'file')
+    saveas(gcf, filename)
+else
+    fprintf('File exists, skipping save...\n')
+end
+
+%% fig. 2 turn the heat maps to a 2-d representation
+figure('Position', [452,37,829,740]);
+maps = {};
+for frame_idx = 1:size(dprime_all, 2)
+    nexttile;
+    map = make_dprime_atlas(dprime_all, frame_idx, template, regions);
+    map = imrotate(map, 25);
+    maps{frame_idx} = map;
+    imagesc(map)
+    colormap redblue
+    caxis([-1 1])
+    axis off
+end
+
+filename = sprintf('figs/%s_dprime_map_%.2fsdelay_%s.pdf', animal, delayT, cond);
+if ~exist(filename, 'file')
+    saveas(gcf, filename)
+else
+    fprintf('File exists, skipping save...\n')
+end
+
+%% save the data
+
+filename = sprintf('data/%s_dprime_%.2fsdelay_%s.mat', animal, delayT, cond);
+if ~exist(filename, 'file')
+    save(filename, 'dprime_all', 'template', ...
+    'maps', 'tstamps', 'regions', 'delayT', 'opts', 'animal', 'cond');
+else
+    fprintf('File exists, skipping save...\n')
+end
+
+
+% close all
+
+
+
+
+
+

@@ -4,7 +4,7 @@
 
 
 root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
-files = dir(sprintf('%s/templateData/e57/*.mat', root));
+files = dir(sprintf('%s/templateData/f03/*.mat', root));
 
 agg_corr_master = {};
 agg_incorr_master = {};
@@ -40,7 +40,7 @@ for id = 1:numel(files)
     nframes = floor(opts.dt(2) * fs / 2);
     
     % e57: 33, f01: 39, f02: 22, f03:4 
-    if id == 33
+    if id == 4
         brainmap = template.atlas;
         
     end
@@ -66,6 +66,8 @@ for id = 1:numel(files)
     
     % Extract the mean for correct and incorrect, for all offsets
     % for the current session
+    % agg_corr has Noffsets cells, each cell has dimension Nareas x T x
+    % Ntrials
     agg_corr = {};
     for offsetid = 1:maxoffset
         agg_corr{offsetid} = template.aggData(:,end-nframes-10:end, ...
@@ -74,7 +76,8 @@ for id = 1:numel(files)
             delaytrials & ~trialInfo.feedback & pos_arr == offsetid);
     end
 
-
+    % agg_corr_master has Noffsets cells, each cells has dimesnion
+    % Nareas x T x Ntrials
     % Update the master arrays for all offsets
     for offsetid = 1:maxoffset
         [~,nfr,Ncorr] = size(agg_corr{offsetid});
@@ -135,52 +138,56 @@ plot(lenincorrs)
 
 %% Visualize average activity - note deprecated, 
 % execute next cell instead
-meancorr = nanmean(agg_corr_master, 3);
-mean_incorr = nanmean(agg_incorr_master, 3);
-
-
-Ncorr = size(agg_corr_master, 3);
-std_corr = nanstd(agg_corr_master, [], 3);
-Nincorr = size(agg_incorr_master, 3);
-std_incorr = nanstd(agg_incorr_master, [], 3);
-
-std_group = sqrt((std_corr.^2 * (Ncorr - 1) + std_incorr.^2 * (Nincorr - 1)) / ...
-        (Ncorr + Nincorr - 2));
-meandiff_all = (mean_incorr - meancorr) ./ std_group;
-
-
-rot_angle = 34;
-
-% plot
-for tid = 1:size(meancorr, 2)
-    t = tid;
-    diff_map = brainmap * 0;
-    for i = 1:numel(areaid_lst)       
-        areaID = areaid_lst(i);
-        diff_map(brainmap == areaID) = meandiff_all(i, t);
-    end
-    
-    nexttile
-    diff_map = imrotate(diff_map, rot_angle);  
-    rot_brainmap = imrotate(brainmap, rot_angle);
-    diff_map(rot_brainmap == 0) = 0;
-    
-    imagesc(diff_map);
-    colormap redblue
-    caxis([-0.5 0.5])
-    axis off
-
-end
+% meancorr = nanmean(agg_corr_master, 3);
+% mean_incorr = nanmean(agg_incorr_master, 3);
+% 
+% 
+% Ncorr = size(agg_corr_master, 3);
+% std_corr = nanstd(agg_corr_master, [], 3);
+% Nincorr = size(agg_incorr_master, 3);
+% std_incorr = nanstd(agg_incorr_master, [], 3);
+% 
+% std_group = sqrt((std_corr.^2 * (Ncorr - 1) + std_incorr.^2 * (Nincorr - 1)) / ...
+%         (Ncorr + Nincorr - 2));
+% meandiff_all = (mean_incorr - meancorr) ./ std_group;
+% 
+% 
+% rot_angle = 34;
+% 
+% % plot
+% for tid = 1:size(meancorr, 2)
+%     t = tid;
+%     diff_map = brainmap * 0;
+%     for i = 1:numel(areaid_lst)       
+%         areaID = areaid_lst(i);
+%         diff_map(brainmap == areaID) = meandiff_all(i, t);
+%     end
+%     
+%     nexttile
+%     diff_map = imrotate(diff_map, rot_angle);  
+%     rot_brainmap = imrotate(brainmap, rot_angle);
+%     diff_map(rot_brainmap == 0) = 0;
+%     
+%     imagesc(diff_map);
+%     colormap redblue
+%     caxis([-0.5 0.5])
+%     axis off
+% 
+% end
 
 
 
 %%
+% corr_all has shape Nareas x T x Ntrials (combined for all sessions)
 corr_all = [];
 incorr_all = [];
 for i = 50:90
     corr_all = cat(3, corr_all, agg_corr_master{i});
     incorr_all = cat(3, incorr_all, agg_incorr_master{i});
 end
+
+%%
+visualize_dprime(corr_all, incorr_all, brainmap, areaid_lst)
 
 %%
 for i = 1:3
@@ -211,7 +218,7 @@ meandiff_all = (mean_incorr - meancorr) ./ std_group;
 
 
 rot_angle = 34;
-cmap = getPyPlot_cMap(Reds, 256);
+% cmap = getPyPlot_cMap(Reds, 256);
 
 % plot
 for tid = 1:size(meancorr, 2)

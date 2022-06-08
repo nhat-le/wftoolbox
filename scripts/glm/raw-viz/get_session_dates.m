@@ -6,7 +6,7 @@ function dates_to_extract = get_session_dates(animal, delay, delaytype)
 
 switch animal
     case 'e57'
-        if delay == 0
+        if delay == 0 
             dates_to_extract = {'021721', '021821', '021921', '022321', '022621', '030221', '030321', '030421'};
         elseif delay == 0.5 && strcmp(delaytype, 'half')
             dates_to_extract = {'030521', '030621', '030821'};

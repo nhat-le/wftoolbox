@@ -38,10 +38,14 @@ for i = 1:numel(idlst) %id of file to investigate
     
     % Load the template file
     load(fullfile(files(id).folder, files(id).name));
-    fprintf('%d: %s\n', id, files(id).name)
-    disp(size(template.aggData))
 
-    [Nareas, T, Ntrials] = size(template.aggData);
+    if isfield(opts, 'verbose') && opts.verbose
+        fprintf('%d: %s\n', id, files(id).name);
+        disp(size(template.aggData))
+    end
+    
+
+    T = size(template.aggData, 2);
 
     % Load the trial information, split into correct and incorrect
     [trialInfo, opts, ~] = helper.load_trial_info(animal, expdate);
@@ -53,6 +57,7 @@ for i = 1:numel(idlst) %id of file to investigate
         regionCorr = template.aggData(:, :, trialInfo.feedback == 1);
         regionIncorr = template.aggData(:, :, trialInfo.feedback == 0);
     else
+        assert(max(trialInfo.rewardDelays) > 0)
         regionCorr = template.aggData(:, :, trialInfo.feedback == 1 & trialInfo.rewardDelays > 0);
         regionIncorr = template.aggData(:, :, trialInfo.feedback == 0 & trialInfo.rewardDelays > 0);
     end
@@ -88,9 +93,6 @@ end
     regionsIncorr_all, normalize_mode);
 
 end
-
-
-
 
 
 
