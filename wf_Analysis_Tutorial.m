@@ -2,12 +2,22 @@
 warning('off', 'imageio:tiffmexutils:libtiffWarning')
 
 %Note: code will add the root for you, only need to specify relative path
+
 opts.filePath = 'E:\1p\exp22an1';
 opts.trialDataPath = 'C:\LocalExpData\exp22an2\2022-02-23\1';
 
 
 opts.saveFolder = nan; % if nan, will save in the same folder as filePath
 opts.animal = 'exp22an2'; % if nan, code will figure out what animal from file path
+
+% opts.filePath = 'F:\May2021\051421\F03';
+% opts.trialDataPath = 'C:\LocalExpData\subjects\f03\2021-05-14\1';
+% opts.filePath = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/Dec2020/e54-12272020/e54blockworld';
+% opts.trialDataPath = '/Users/minhnhatle/Dropbox (MIT)/Nhat/Rigbox/e54/2020-12-27/1';
+% 
+% opts.saveFolder = nan; % if nan, will save in the same folder as filePath
+% opts.animal = 'e54'; % if nan, code will figure out what animal from file path
+
 opts = configurePaths(opts);
 
 opts.alignBorders = 1; % if borders should be aligned using Allen atlas template, usually 1

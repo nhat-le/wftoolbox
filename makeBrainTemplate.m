@@ -27,7 +27,7 @@ Y = imread(fullfile(fdir, 'e57surface.png'));
 % Y = imread(fullfile(fdir, 'f03surface.tif'));
 
 % For F04
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f04Template/';
+% fdir = 'templates/f04Template/';
 % Y = imread(fullfile(fdir, 'f04surface.png'));
 
 %% Get brainmask
@@ -72,4 +72,6 @@ figure; subplot(1,2,1); imagesc(max(Y,[],3) + uint16(borders) * 10000); axis ima
 subplot(1,2,2); imagesc(atlas); axis image
 
 %% Save the warped atlas
+
 save(fullfile(fdir,'atlas_E57.mat'),'atlas','areanames','invtform', 'borders');
+

@@ -1,0 +1,201 @@
+% Script for loading the averaged template data by brain region,
+% with simple analyses and visualization
+% + pre-processing for GLM analysis
+
+paths = pathsetup('wftoolbox');
+
+root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
+
+animal = 'e57';
+expdate = '030221';
+
+% load trialinfo from raw data (containing info about reward/error etc)
+filepath = sprintf('%s/%s/allData_extracted_%s_%spix.mat', paths.rawdatapath,...
+    animal, animal, expdate);
+assert(exist(filepath, 'file') > 0);
+load(filepath, 'trialInfo', 'opts', 'timingInfo');
+
+% load template file
+% template_path = sprintf('%s/templates/%s_%s_template.mat', root,...
+%     animal, expdate);
+template_path = sprintf('%s/templateData/%s/templateData_%s_%spix.mat', root,...
+    animal, animal, expdate);
+load(template_path);
+
+
+dt_all = (trialInfo.feedbackTimes - trialInfo.responseTimes);
+delaytrials = dt_all > max(dt_all) / 2;
+
+%%
+
+% L-VISp1 = 56; R-VISp1 = 17
+% determine the 'dprime' score for each brain area
+% meandiff_all has dimension T x nregions
+meandiff_all = [];
+for i = 1:numel(template.areaid)
+    area_agg_data = squeeze(template.aggData(i, :, :));
+
+    corr_area_data = area_agg_data(:, delaytrials & trialInfo.feedback);
+    incorr_area_data = area_agg_data(:, delaytrials & ~trialInfo.feedback);
+
+
+    mean_corr = mean(corr_area_data, 2);
+    std_corr = std(corr_area_data, [], 2);
+    mean_incorr = mean(incorr_area_data, 2);
+    std_incorr = std(incorr_area_data, [], 2);
+
+    meandiff_all(:,i) = (mean_incorr - mean_corr) ./ std_corr;
+end
+
+%% color in the brain data
+figure('Position', [52,589,1221,113]);
+rot_angle = 38;
+borders = template.borders;
+borders(borders > 0) = 1;
+se = offsetstrel('ball',5,5);
+borders = imdilate(borders, se);
+borders(borders <= 5) = 0;
+borders(borders > 5) = 1;
+
+
+tarr = 2:2:size(meandiff_all, 1);
+tpoints = linspace(opts.dt(1), opts.dt(2), numel(tarr));
+for tid = 1:numel(tarr)
+    t = tarr(tid);
+    diff_map = template.atlas * 0;
+    for i = 1:numel(template.areaid)       
+        areaID = template.areaid(i);
+        diff_map(template.atlas == areaID) = meandiff_all(t, i);
+    end
+    
+    subplot(6, 7, tid);
+    diff_map = imrotate(diff_map, rot_angle);
+    borders_rot = imrotate(borders, rot_angle);
+    
+    
+    imagesc(diff_map);
+    colormap redblue
+    caxis([-1.5 1.5])
+    title(sprintf('%.2f', tpoints(tid)))
+    axis off
+
+end
+
+%%
+root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
+files = dir(sprintf('%s/templateData/*/*.mat', root));
+savedir = '/Users/minhnhatle/Documents/ExternalCode/wftoolbox/scripts/glm/figs/041422';
+
+h = waitbar(0);
+for id = 55:numel(files)
+    waitbar(id / numel(files), h);
+    try
+        parts = strsplit(files(id).name, '_');
+        animal = parts{2};
+        datestr = parts{end}(1:end-7);
+        savepath = sprintf('%s/%s_%s_evolution_dprime.png', savedir, ...
+            animal, datestr);
+        
+        plot_wf_brain_data(fullfile(files(id).folder, files(id).name), savepath)
+    catch m
+        if strcmp(m.identifier, 'MATLAB:load:couldNotReadFile')
+            fprintf('%s: File does not exist...\n', files(id).name)
+        end  
+    end
+end
+close(h)
+
+
+function plot_wf_brain_data(template_filepath, varargin)
+% template_filepath: string, path to the template file where template
+% information is extracted.
+% If savepath is provided, will save the file
+if numel(varargin) == 1
+    savefile = 1;
+    savepath = varargin{1};
+else
+    savefile = 0;
+end
+
+
+parts = strsplit(template_filepath, '/');
+filename = parts{end};
+partsname = strsplit(filename, '_');
+animal = partsname{2};
+expdate = partsname{end}(1:end-7);
+
+
+% Load the template
+load(template_filepath, 'template')
+
+
+% Load the trial info
+[trialInfo, opts, ~] = helper.load_trial_info(animal, expdate);
+
+
+% Process the template.aggData
+dt_all = (trialInfo.feedbackTimes - trialInfo.responseTimes);
+delaytrials = dt_all > max(dt_all) / 2;
+
+% determine the 'dprime' score for each brain area
+% meandiff_all has dimension T x nregions
+meandiff_all = [];
+for i = 1:numel(template.areaid)
+    area_agg_data = squeeze(template.aggData(i, :, :));
+
+    corr_area_data = area_agg_data(:, delaytrials & trialInfo.feedback);
+    incorr_area_data = area_agg_data(:, delaytrials & ~trialInfo.feedback);
+
+
+    mean_corr = mean(corr_area_data, 2);
+    Ncorr = size(corr_area_data, 2);
+    std_corr = std(corr_area_data, [], 2);
+    
+    mean_incorr = mean(incorr_area_data, 2);
+    Nincorr = size(incorr_area_data, 2);
+    std_incorr = std(incorr_area_data, [], 2);
+    
+    std_group = sqrt((std_corr.^2 * (Ncorr - 1) + std_incorr.^2 * (Nincorr - 1)) / ...
+        (Ncorr + Nincorr - 2));
+
+    meandiff_all(:,i) = (mean_incorr - mean_corr) ./ std_group;
+end
+
+% Plot the data
+
+figure('Position', [1,1,1440,804]);
+rot_angle = 38;
+
+gap = ceil(size(meandiff_all, 1) / 42);
+tarr = 1:gap:size(meandiff_all, 1);
+tpoints = linspace(opts.dt(1), opts.dt(2), numel(tarr));
+for tid = 1:numel(tarr)
+    t = tarr(tid);
+    diff_map = template.atlas * 0;
+    for i = 1:numel(template.areaid)       
+        areaID = template.areaid(i);
+        diff_map(template.atlas == areaID) = meandiff_all(t, i);
+    end
+    
+    subplot(6, 7, tid);
+    diff_map = imrotate(diff_map, rot_angle);    
+    
+    imagesc(diff_map);
+    colormap redblue
+    caxis([-1.5 1.5])
+    title(sprintf('%.2f', tpoints(tid)))
+    axis off
+
+end
+
+% Save the figure
+if savefile
+    saveas(gcf, savepath)
+    fprintf('%s: file saved\n', savepath)
+end
+
+end
+
+
+
+

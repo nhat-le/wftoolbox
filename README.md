@@ -10,6 +10,7 @@ A toolbox for widefield imaging analysis
 ### Instructions for setting up animal templates
 - Download the locaNMF-prepocess toolbox from https://github.com/ss5513/locaNMF-preprocess
 - Add the locaNMF/utils folder to the MATLAB path
+- To set up the animal template, run `/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess`
 - Open wftoolbox/makeBrainTemplate and follow the instructions
 - Go to align_recording_to_allen.mat, change line 21 to load('allenDorsalMap.mat')
 
@@ -23,3 +24,13 @@ A toolbox for widefield imaging analysis
 - Modify path and run `compile_allData.m`: this will extract the data and save in allData_extracted*.m
     - Note that the files are saved in the folder specified in `opts.saveFolder`
 - Modify path and run `save_allData.m`: this will align the template and save in template_extracted*.m
+
+### Instructions for setting templates for opto alignment:
+- Modify the script `laserGalvoControl/classes/animalList.m` and update with new animal and paths to data etc
+- First capture ref image using the galvoGUI, the images will be saved in the corresponding animal folder in C:/Data/{animal}.
+- Note: if use the refImage, need to flip the image with ImageJ/Fiji twice: once horizontally and once vertically. Save this as `_Flip.tif`, also save the transpose of this as `_trans_flip.tif` version.
+- On personal computer, run the script `/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess/process_dataset1p.m` to align the animal template. Make sure to do Y = Y' for transposing the refIm.Note image will be upside-down, but assume it is not mirrored (left side = left side of image as viewed upside-down)
+- This creates an animal template folder (for e.g. `wftoolbox/templates/f32Template/f32_atlas.m`). Copy this to the opto galvo computer folder (`Opto galvo/Data (1)/f32`, then transfer to `Documents/wftoolbox/templates/{animal}`
+- Copy the transposed image (Y = Y', then imwrite(Y, ...)) , then copy th to galvo computer, folder Documents/wftoolbox/templates/{animal}. Also copy the cluster_points.mat file from f32 here (note that f26, 27 cluster points will not work!)
+
+- Then modify the `atlas.m` file to ensure opts.imgPath points to the location of the trans_flip.tif image generated earlier (C:/Data/{animal}/..._trans_flip.tif).

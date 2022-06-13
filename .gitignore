@@ -1,5 +1,8 @@
 *.pdf
 *.mat
+*.png
+*.ma
 figures/
 Murat_tca_jobtalk/
 *.DS_Store
+*/*.m\~

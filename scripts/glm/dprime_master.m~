@@ -1,0 +1,109 @@
+% For combining all sessions of a given animal
+% and compute the average activation in reward and error conditions
+
+
+root = '/Volumes/GoogleDrive/Other computers/ImagingDESKTOP-AR620FK/processed/raw';
+files = dir(sprintf('%s/templateData/e57/*.mat', root));
+
+agg_corr_master = [];
+agg_incorr_master = [];
+Ncorr_all = [];
+Nincorr_all = [];
+
+areaid_lst = [-653  -651  -335  -301  -300  -282  -275  -268  -261  -255  -249  -217  -198  -186  -178  -171, ...
+     -164  -157  -150  -143  -136  -129  -121  -114  -107  -100   -92   -78   -71   -64   -57   -50, ...
+     -43   -36   -29   -21   -15    -8     8    15    21    29    36    43    50    57    64    71, ...
+     78    92   100   107   114   121   129   136   143   150   157   164   171   178   186   198, ...
+     249   255   261   268   275   282   300   301   335   651   653];
+
+for id = 15:numel(files)
+    parts = strsplit(files(id).name, '_');
+    animal = parts{2};
+    expdate = parts{end}(1:end-7);
+    
+    % Load the template file
+    load(fullfile(files(id).folder, files(id).name));
+    
+    % Load the trial info if exists
+    try
+        [trialInfo, opts, timingInfo] = helper.load_trial_info(animal, expdate);
+    catch
+        fprintf('%s: file does not exist\n', files(id).name)
+        continue
+    end
+    
+    assert(opts.dt(2) == 1); %1-second window post-reward to extract
+    fs = timingInfo.fs;
+    nframes = floor(opts.dt(2) * fs / 2);
+    
+    
+    % Only extract trials with delays
+    dt_all = trialInfo.feedbackTimes - trialInfo.responseTimes;
+    delaytrials = dt_all > max(dt_all) / 2;
+    
+    % Extract the mean for correct and incorrect
+    agg_corr = template.aggData(:,end-nframes:end,delaytrials & trialInfo.feedback);
+    agg_incorr = template.aggData(:,end-nframes:end,delaytrials & ~trialInfo.feedback);
+    [~,nfr,Ncorr] = size(agg_corr);
+    Nincorr = size(agg_incorr, 3);
+    
+    
+    currdim_corr = size(agg_corr_master, 3);
+    currdim_incorr = size(agg_incorr_master, 3);
+    
+    if currdim_corr == 1
+        currdim_corr = 0;
+    end
+    
+    if currdim_incorr == 1
+        currdim_incorr = 0;
+    end
+       
+    
+    agg_corr_master(1:numel(areaid_lst),1:nfr,end+1:end+Ncorr) = nan;
+    agg_incorr_master(1:numel(areaid_lst),1:nfr,end+1:end+Nincorr) = nan;
+    
+    Ncorr_all(end+1) = Ncorr;
+    Nincorr_all(end+1) = Nincorr;
+    
+    % place into the master array
+    for j = 1:numel(template.areaid)
+        areaid = find(areaid_lst == template.areaid(j));
+        agg_corr_master(areaid, :,currdim_corr + 1 : currdim_corr + Ncorr) = ...
+            agg_corr(j,:,:);
+        agg_incorr_master(areaid, :,currdim_incorr + 1 : currdim_incorr + Nincorr) = ...
+            agg_incorr(j,:,:);
+    end
+    
+    
+    
+    
+    
+%     agg_corr_master(:,:,end+1:end+Ncorr) = agg_corr;
+%     agg_incorr_master(:,:,end+1:end+Nincorr) = agg_incorr;
+%     
+%     Ncorr_all(end+1) = Ncorr;
+%     Nincorr_all(end+1) = Nincorr;
+    
+    fprintf('%d, done: %s, %d\n', id, files(id).name, numel(template.areaid));
+    if sum(~ismember(template.areaid, areaid_lst)) > 0
+        fprintf('### flag:%s\n', files(id).name);
+    end
+    
+end
+
+%% Visualize average activity
+meancorr = nanmean(
+
+
+
+
+
+
+
+
+
+
+
+
+     
