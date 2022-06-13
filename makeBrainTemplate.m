@@ -1,30 +1,30 @@
 %% Change the directory of this path to locanmf-preprocess/utils
-addpath('/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess/utils/');
+% addpath('/Users/minhnhatle/Documents/ExternalCode/locaNMF-preprocess/utils/');
 
 %% Load the overlaid image
 % For E53
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e53Template/';
+% fdir = 'templates/e53Template/';
 % Y = imread(fullfile(fdir, 'serenoOverlay.png'));
 
 % For E54
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/';
+% fdir = 'templates/e54Template/';
 % Y = imread(fullfile(fdir, 'serenoOverlay.png'));
 
 % For E57
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/e54Template/';
-% Y = imread(fullfile(fdir, 'serenoOverlay.png'));
+fdir = 'templates/e57Template/';
+Y = imread(fullfile(fdir, 'e57surface.png'));
 
 % For F01
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f01Template/';
+% fdir = 'templates/f01Template/';
 % Y = imread(fullfile(fdir, 'f01surface.png'));
 
 % For F02
-% fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f02Template/';
+% fdir = 'templates/f02Template/';
 % Y = imread(fullfile(fdir, 'f02surface.tif'));
 
 % For F03
-fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f03Template/';
-Y = imread(fullfile(fdir, 'f03surface.tif'));
+% fdir = 'templates/f03Template/';
+% Y = imread(fullfile(fdir, 'f03surface.tif'));
 
 % For F04
 % fdir = '/Users/minhnhatle/Dropbox (MIT)/Sur/2p1/f04Template/';
@@ -54,7 +54,7 @@ atlas = dorsalMaps.dorsalMapScaled;
 atlas(xx < size(atlas, 1) / 2) = atlas(xx < size(atlas, 1) / 2) * -1;
 
 borders = dorsalMaps.edgeMapScaled;
-load('utils/atlasStandard.mat', 'areanames');
+load('templates/atlasStandard.mat', 'areanames');
 % tform = align_recording_to_allen(max(Y,[],3), {'R VISp1'}); % align <-- input any function of data here
 tform = align_recording_to_allen(max(Y,[],3));
 invT=pinv(tform.T); % invert the transformation matrix
@@ -72,4 +72,4 @@ figure; subplot(1,2,1); imagesc(max(Y,[],3) + uint16(borders) * 10000); axis ima
 subplot(1,2,2); imagesc(atlas); axis image
 
 %% Save the warped atlas
-save(fullfile(fdir,'atlas_F03.mat'),'atlas','areanames','invtform', 'borders');
+save(fullfile(fdir,'atlas_E57.mat'),'atlas','areanames','invtform', 'borders');

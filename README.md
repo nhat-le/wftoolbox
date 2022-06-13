@@ -21,4 +21,5 @@ A toolbox for widefield imaging analysis
 (4) dtend: end of time window for extraction (in secs) - usually for ITI of 1s this should be [-1 1]
 (5) animal: animal name
 - Modify path and run `compile_allData.m`: this will extract the data and save in allData_extracted*.m
+    - Note that the files are saved in the folder specified in `opts.saveFolder`
 - Modify path and run `save_allData.m`: this will align the template and save in template_extracted*.m
